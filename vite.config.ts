@@ -22,5 +22,5 @@ export default defineConfig({
       '@': resolve(__dirname, 'src')
     }
   },
-  base: '/GLTFCharacterControl/'
+  base: '/XRRobotSim/'
 })
