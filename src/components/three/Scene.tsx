@@ -38,7 +38,7 @@ const Scene = () => {
           renderOrder={-1}
         />
       )}
-      <XROrigin position={[0, 0, stageRadius]} >
+      <XROrigin position={[0, 0, 0]} >
         <MainMenu />
       </XROrigin>
     </>

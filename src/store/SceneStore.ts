@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import * as THREE from 'three'
 
 const Environments = {
+  "Minedump": 'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/minedump_flats_2k.hdr',
   "Hanger": 'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/small_hangar_01_2k.hdr',
   "Hall": 'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/dancing_hall_2k.hdr',
   "Ballroom": 'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/vestibule_2k.hdr',
@@ -26,7 +27,7 @@ interface SceneState {
 export const useSceneStore = create<SceneState>((set) => ({
   showBackground: true,
   showGrid: false,
-  currentEnvironment: Environments["Hall"],
+  currentEnvironment: Environments["Minedump"],
   orbitCenter: 0.5,
   stageRadius: 1,
   centeringOffset: new THREE.Vector3(0, 0, 0),
