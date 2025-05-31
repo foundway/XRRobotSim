@@ -1,0 +1,9 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+# Foundway's Personal React Rules
+
+- Use arrow function for components
