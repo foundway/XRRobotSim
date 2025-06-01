@@ -1,7 +1,5 @@
 import * as THREE from 'three'
-import { SkeletonUtils } from 'three-stdlib'
-import React, { JSX, useEffect } from 'react'
-import { Handle, HandleTarget } from '@react-three/handle'
+import React, { JSX, useEffect, useRef } from 'react'
 import { useGLTF, useAnimations } from '@react-three/drei'
 import { useModels } from '@/context/AppContext'
 import { useModelStore } from '@/store/ModelStore'
@@ -9,12 +7,11 @@ import { useSceneStore } from '@/store/SceneStore'
 import { useAnimationStore } from '@/store/AnimationStore'
 
 export const Character = (props: JSX.IntrinsicElements['group']) => {  
-  const { currentAnimation, setCurrentAnimation, setAnimations } = useAnimationStore()
+  const { currentAnimation, setCurrentAnimation, setAnimations, rotation } = useAnimationStore()
   const { scale, isMenuVisible } = useModelStore()
-  const { centeringOffset, setOrbitCenter, setStageRadius, setCenteringOffset } = useSceneStore()
   const { currentModel } = useModels()
   const modelUrl = currentModel.url
-  const { scene, animations } = useGLTF(modelUrl)
+  const { scene, nodes, animations } = useGLTF(modelUrl)
   const group = React.useRef<THREE.Group>(null)
   const { actions } = useAnimations(animations, group)
   const UNSET_ROUGHNESS = 1
@@ -22,22 +19,28 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
   const FALLBACK_ROUGHNESS = 0.1 
   const FALLBACK_THICKNESS = 1
 
-  const clone = React.useMemo(() => {
-    const cloned = SkeletonUtils.clone(scene)
-    cloned.traverse((child) => {
+  useEffect(() => { 
+    if (!scene) return
+    scene.traverse((child) => {
       if (child instanceof THREE.Mesh && child.material instanceof THREE.MeshPhysicalMaterial && child.material.transmission > 0) {
         child.material.transparent = false
-        if (child.material.roughness == UNSET_ROUGHNESS) { // roughness need to be lower than 1
+        if (child.material.roughness == UNSET_ROUGHNESS) {
           child.material.roughness = FALLBACK_ROUGHNESS
         }
-        if (child.material.thickness == UNSET_THICKNESS) { // roughness need to be higher than 0
+        if (child.material.thickness == UNSET_THICKNESS) {
           child.material.thickness = FALLBACK_THICKNESS
         }
         child.material.side = THREE.FrontSide
-      } 
+      }
     })
-    return cloned
   }, [scene])
+
+  useEffect(() => {
+    if (nodes['spine002'] != null) {
+      nodes['spine002'].rotation.y = rotation
+      console.log('rotation: ', rotation)
+    }
+  }, [rotation, nodes['spine002']])
 
   useEffect(() => { 
     if (!scene) return
@@ -66,8 +69,8 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
   }, [currentAnimation])
 
   return (
-    <group ref={group} scale={scale} {...props} dispose={null}>
-      <primitive object={clone} position={new THREE.Vector3(0, 0, -5)} userData={{ isCharacter: true }} />
+    <group ref={scene} {...props} dispose={null}>
+      <primitive object={scene} position={new THREE.Vector3(0, 0, -5)} rotation={[0, Math.PI, 0]} scale={scale} userData={{ isCharacter: true }} />
     </group>
   )
 }
