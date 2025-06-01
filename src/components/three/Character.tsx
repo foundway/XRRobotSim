@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import React, { JSX, useEffect, useRef } from 'react'
+import { Handle, HandleTarget } from '@react-three/handle'
 import { useGLTF, useAnimations } from '@react-three/drei'
 import { useModels } from '@/context/AppContext'
 import { useModelStore } from '@/store/ModelStore'
@@ -9,6 +10,7 @@ import { useAnimationStore } from '@/store/AnimationStore'
 export const Character = (props: JSX.IntrinsicElements['group']) => {  
   const { currentAnimation, setCurrentAnimation, setAnimations, rotation } = useAnimationStore()
   const { scale, isMenuVisible } = useModelStore()
+  const { centeringOffset, setOrbitCenter, setStageRadius, setCenteringOffset } = useSceneStore()
   const { currentModel } = useModels()
   const modelUrl = currentModel.url
   const { scene, nodes, animations } = useGLTF(modelUrl)
@@ -69,8 +71,8 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
   }, [currentAnimation])
 
   return (
-    <group ref={scene} {...props} dispose={null}>
-      <primitive object={scene} position={new THREE.Vector3(0, 0, -5)} rotation={[0, Math.PI, 0]} scale={scale} userData={{ isCharacter: true }} />
+    <group {...props} dispose={null}>
+      <primitive object={scene} position={[0, 0, -5]} rotation={[0, Math.PI, 0]} scale={scale} userData={{ isCharacter: true }} />
     </group>
   )
 }
