@@ -1,16 +1,18 @@
 // TODO: customize the controller
-import { DefaultXRControllerOptions, DefaultXRController, useXRInputSourceState } from '@react-three/xr'
+import { DefaultXRControllerOptions, DefaultXRController, useXRInputSourceState, useXRInputSourceStateContext } from '@react-three/xr'
 import { useFrame } from '@react-three/fiber'
+import { Box } from '@react-three/drei'
 import { useAnimationStore } from '@/store/AnimationStore'
 
 const XRController = (props: DefaultXRControllerOptions) => {
-  const controller = useXRInputSourceState('controller', 'right')
+  const context = useXRInputSourceStateContext()
+  const rightController = useXRInputSourceState('controller', 'right')
   const { addRotation } = useAnimationStore()
   const DEADZONE = 0.1
   const ROTATION_SPEED = -0.01
 
   useFrame(() => {
-    const thumstickState = controller?.gamepad['xr-standard-thumbstick']
+    const thumstickState = rightController?.gamepad['xr-standard-thumbstick']
     const x = thumstickState?.xAxis || 0
     
     if (Math.abs(x) > DEADZONE) {
@@ -26,6 +28,12 @@ const XRController = (props: DefaultXRControllerOptions) => {
         teleportPointer={false}
         {...props}
       />
+      {context?.inputSource.handedness === 'right' && <Box args={[0.04, 0.04, 0.04]} position={[0, 0, 0]}>
+        <meshBasicMaterial color="green" />
+      </Box>}
+      {context?.inputSource.handedness === 'left' && <Box args={[0.04, 0.04, 0.04]} position={[0, 0, 0]}>
+        <meshBasicMaterial color="red" />
+      </Box>}
     </>
   )
 }
