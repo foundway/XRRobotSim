@@ -6,20 +6,67 @@ import { useModels } from '@/context/AppContext'
 import { useModelStore } from '@/store/ModelStore'
 import { useSceneStore } from '@/store/SceneStore'
 import { useAnimationStore } from '@/store/AnimationStore'
+import { useFrame, useThree } from '@react-three/fiber'
+import { useXRInputSourceState } from '@react-three/xr'
 
 export const Character = (props: JSX.IntrinsicElements['group']) => {  
   const { currentAnimation, setCurrentAnimation, setAnimations, rotation } = useAnimationStore()
   const { scale, isMenuVisible } = useModelStore()
   const { centeringOffset, setOrbitCenter, setStageRadius, setCenteringOffset } = useSceneStore()
+  const rightController = useXRInputSourceState('controller', 'right')
   const { currentModel } = useModels()
   const modelUrl = currentModel.url
   const { scene, nodes, animations } = useGLTF(modelUrl)
   const group = React.useRef<THREE.Group>(null)
+  const rightPlaceholderRef = React.useRef<THREE.Mesh | null>(null)
   const { actions } = useAnimations(animations, group)
+  const { camera } = useThree()
+  const CharacterOrigin = useRef<THREE.Object3D>(null)
   const UNSET_ROUGHNESS = 1
   const UNSET_THICKNESS = 0
   const FALLBACK_ROUGHNESS = 0.1 
   const FALLBACK_THICKNESS = 1
+  const CHARACTER_ORIGIN = new THREE.Vector3(0, 0, -5)
+
+  useEffect(() => {
+    const rightPlaceholder = new THREE.Mesh(
+      new THREE.BoxGeometry(0.5, 0.5, 0.5),
+      new THREE.MeshBasicMaterial({ color: 'green', wireframe: true })
+    )
+    scene.add(rightPlaceholder)
+    rightPlaceholderRef.current = rightPlaceholder
+    return () => {
+      scene.remove(rightPlaceholder)
+    }
+  }, [scene])
+
+  useFrame(() => {
+    if (nodes['spine005']) {
+      nodes['spine005'].quaternion.copy(camera.quaternion)
+      nodes['spine005'].rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), Math.PI)
+    }
+
+    if (rightController?.object?.position && rightPlaceholderRef.current) {
+      const worldPosition = rightController.object.getWorldPosition(new THREE.Vector3())
+      const worldQuaternion = rightController.object.getWorldQuaternion(new THREE.Quaternion())
+      rightPlaceholderRef.current.position.copy(worldPosition.multiplyScalar(2).applyAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI))
+      // rightPlaceholderRef.current.quaternion.copy(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI).multiply(worldQuaternion))
+      rightPlaceholderRef.current.quaternion.copy(worldQuaternion)
+      rightPlaceholderRef.current.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), Math.PI)
+    }
+  })
+
+  // Add placeholder box to head joint
+  useEffect(() => {
+    if (nodes['spine005']) {
+      const box = new THREE.Mesh(
+        new THREE.BoxGeometry(0.2, 0.4, 0.2),
+        new THREE.MeshBasicMaterial({ color: 'blue', wireframe: true })
+      )
+      box.position.set(0, 0.2, 0) // Position slightly above the head
+      nodes['spine005'].add(box)
+    }
+  }, [nodes['spine005']])
 
   useEffect(() => { 
     if (!scene) return
@@ -71,8 +118,8 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
   }, [currentAnimation])
 
   return (
-    <group {...props} dispose={null}>
-      <primitive object={scene} position={[0, 0, -5]} rotation={[0, Math.PI, 0]} scale={scale} userData={{ isCharacter: true }} />
+    <group {...props} ref={CharacterOrigin} position={CHARACTER_ORIGIN} rotation={[0, Math.PI, 0]} dispose={null}>
+      <primitive object={scene} scale={scale} userData={{ isCharacter: true }} />
     </group>
   )
 }

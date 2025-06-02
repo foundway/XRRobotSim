@@ -1,4 +1,3 @@
-// TODO: customize the controller
 import { DefaultXRControllerOptions, DefaultXRController, useXRInputSourceState, useXRInputSourceStateContext } from '@react-three/xr'
 import { useFrame } from '@react-three/fiber'
 import { Box } from '@react-three/drei'
@@ -29,10 +28,10 @@ const XRController = (props: DefaultXRControllerOptions) => {
         {...props}
       />
       {context?.inputSource.handedness === 'right' && <Box args={[0.04, 0.04, 0.04]} position={[0, 0, 0]}>
-        <meshBasicMaterial color="green" />
+        <meshBasicMaterial color="green" wireframe={true} />
       </Box>}
       {context?.inputSource.handedness === 'left' && <Box args={[0.04, 0.04, 0.04]} position={[0, 0, 0]}>
-        <meshBasicMaterial color="red" />
+        <meshBasicMaterial color="red" wireframe={true} />
       </Box>}
     </>
   )
