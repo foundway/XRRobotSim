@@ -19,6 +19,7 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
   const modelUrl = currentModel.url
   const { scene, nodes, animations } = useGLTF(modelUrl)
   const group = React.useRef<THREE.Group>(null)
+  const parentRef = React.useRef<THREE.Object3D>(null)
   const rightIKTargetRef = React.useRef<THREE.Object3D | null>(null)
   const leftIKTargetRef = React.useRef<THREE.Object3D | null>(null)
   const rightControllerRef = React.useRef<THREE.Object3D | null>(null)
@@ -30,7 +31,7 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
   const UNSET_THICKNESS = 0
   const FALLBACK_ROUGHNESS = 0.1 
   const FALLBACK_THICKNESS = 1
-  const CHARACTER_ORIGIN = new THREE.Vector3(0, 0, -4)
+  const CHARACTER_ORIGIN = new THREE.Vector3(0, 0, -3)
   const ikSolverRef = useRef<CCDIKSolver | null>(null)
   const ikHelperRef = useRef<CCDIKHelper | null>(null)
   const skinnedMeshRef = useRef<THREE.SkinnedMesh | null>(null)
@@ -93,8 +94,7 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
             index: upperArmIndex,
             rotationMin: new THREE.Vector3(-Math.PI, -Math.PI, -Math.PI),
             rotationMax: new THREE.Vector3(Math.PI, Math.PI, Math.PI)
-          },
-          {
+          }, {
             index: forearmIndex,
             rotationMin: new THREE.Vector3(-Math.PI, -Math.PI, -Math.PI),
             rotationMax: new THREE.Vector3(Math.PI, Math.PI, Math.PI)
@@ -103,13 +103,10 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
       }
     ]
 
-    // Create IK solver
     ikSolverRef.current = new CCDIKSolver(mesh, ikChain)
-    
-    // Create IK helper for debugging
-    ikHelperRef.current = new CCDIKHelper(mesh, ikChain)
+    ikHelperRef.current = new CCDIKHelper(mesh, ikChain, 0.05)
     ikHelperRef.current.visible = true
-    mesh.add(ikHelperRef.current)
+    parentRef.current?.add(ikHelperRef.current)
   }, [nodes, scene])
 
   useFrame(() => { // Control character with tracking
@@ -120,7 +117,7 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
 
     if (rightControllerRef.current && rightIKTargetRef.current && targetBoneRef.current && nodes['handR']) {
       rightIKTargetRef.current.position.copy(
-        rightControllerRef.current?.getWorldPosition(new THREE.Vector3()).multiplyScalar(2.5)
+        rightControllerRef.current?.getWorldPosition(new THREE.Vector3()).multiplyScalar(2)
       )
       rightIKTargetRef.current.quaternion.copy(
         rightControllerRef.current?.getWorldQuaternion(new THREE.Quaternion())
@@ -201,6 +198,7 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
 
   return (
     <>
+      <group ref={parentRef} />
       <group {...props} ref={CharacterOrigin} position={CHARACTER_ORIGIN} rotation={[0, 0, 0]} dispose={null}>
         <primitive object={scene} scale={scale} userData={{ isCharacter: true }} />
         <group ref={rightIKTargetRef} >
