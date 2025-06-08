@@ -1,24 +1,27 @@
 import * as THREE from 'three'
 import React, { JSX, useEffect, useRef } from 'react'
-import { Handle, HandleTarget } from '@react-three/handle'
 import { useGLTF, useAnimations } from '@react-three/drei'
 import { useModels } from '@/context/AppContext'
 import { useModelStore } from '@/store/ModelStore'
 import { useSceneStore } from '@/store/SceneStore'
 import { useAnimationStore } from '@/store/AnimationStore'
 import { useFrame, useThree } from '@react-three/fiber'
-import { useXRInputSourceState } from '@react-three/xr'
+import { useXRInputSourceState, XRSpace } from '@react-three/xr'
 
 export const Character = (props: JSX.IntrinsicElements['group']) => {  
-  const { currentAnimation, setCurrentAnimation, setAnimations, rotation } = useAnimationStore()
+  const { currentAnimation, setCurrentAnimation, setAnimations, orientation } = useAnimationStore()
   const { scale, isMenuVisible } = useModelStore()
   const { centeringOffset, setOrbitCenter, setStageRadius, setCenteringOffset } = useSceneStore()
   const rightController = useXRInputSourceState('controller', 'right')
+  const leftController = useXRInputSourceState('controller', 'left')
   const { currentModel } = useModels()
   const modelUrl = currentModel.url
   const { scene, nodes, animations } = useGLTF(modelUrl)
   const group = React.useRef<THREE.Group>(null)
-  const rightPlaceholderRef = React.useRef<THREE.Mesh | null>(null)
+  const rightIKTargetRef = React.useRef<THREE.Object3D | null>(null)
+  const leftIKTargetRef = React.useRef<THREE.Object3D | null>(null)
+  const rightControllerRef = React.useRef<THREE.Object3D | null>(null)
+  const leftControllerRef = React.useRef<THREE.Object3D | null>(null)
   const { actions } = useAnimations(animations, group)
   const { camera } = useThree()
   const CharacterOrigin = useRef<THREE.Object3D>(null)
@@ -28,36 +31,7 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
   const FALLBACK_THICKNESS = 1
   const CHARACTER_ORIGIN = new THREE.Vector3(0, 0, -5)
 
-  useEffect(() => {
-    const rightPlaceholder = new THREE.Mesh(
-      new THREE.BoxGeometry(0.5, 0.5, 0.5),
-      new THREE.MeshBasicMaterial({ color: 'green', wireframe: true })
-    )
-    scene.add(rightPlaceholder)
-    rightPlaceholderRef.current = rightPlaceholder
-    return () => {
-      scene.remove(rightPlaceholder)
-    }
-  }, [scene])
-
-  useFrame(() => {
-    if (nodes['spine005']) {
-      nodes['spine005'].quaternion.copy(camera.quaternion)
-      nodes['spine005'].rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), Math.PI)
-    }
-
-    if (rightController?.object?.position && rightPlaceholderRef.current) {
-      const worldPosition = rightController.object.getWorldPosition(new THREE.Vector3())
-      const worldQuaternion = rightController.object.getWorldQuaternion(new THREE.Quaternion())
-      rightPlaceholderRef.current.position.copy(worldPosition.multiplyScalar(2).applyAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI))
-      // rightPlaceholderRef.current.quaternion.copy(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI).multiply(worldQuaternion))
-      rightPlaceholderRef.current.quaternion.copy(worldQuaternion)
-      rightPlaceholderRef.current.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), Math.PI)
-    }
-  })
-
-  // Add placeholder box to head joint
-  useEffect(() => {
+  useEffect(() => { // Add placeholder box to head joint
     if (nodes['spine005']) {
       const box = new THREE.Mesh(
         new THREE.BoxGeometry(0.2, 0.4, 0.2),
@@ -67,6 +41,31 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
       nodes['spine005'].add(box)
     }
   }, [nodes['spine005']])
+
+  useFrame(() => { // Control character with tracking
+    if (nodes['spine005']) {
+      nodes['spine005'].quaternion.copy(camera.quaternion)
+      nodes['spine005'].rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), Math.PI)
+    }
+
+    if (rightControllerRef.current && rightIKTargetRef.current) {
+      rightIKTargetRef.current.position.copy(
+        rightControllerRef.current?.getWorldPosition(new THREE.Vector3()).multiplyScalar(2)
+      )
+      rightIKTargetRef.current.quaternion.copy(
+        rightControllerRef.current?.getWorldQuaternion(new THREE.Quaternion())
+      )
+    }
+
+    if (leftControllerRef.current && leftIKTargetRef.current) {
+      leftIKTargetRef.current.position.copy(
+        leftControllerRef.current?.getWorldPosition(new THREE.Vector3()).multiplyScalar(2)
+      )
+      leftIKTargetRef.current.quaternion.copy(
+        leftControllerRef.current?.getWorldQuaternion(new THREE.Quaternion())
+      )
+    }
+  })
 
   useEffect(() => { 
     if (!scene) return
@@ -86,10 +85,10 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
 
   useEffect(() => {
     if (nodes['spine002'] != null) {
-      nodes['spine002'].rotation.y = rotation
-      console.log('rotation: ', rotation)
+      const newQuaternion = (new THREE.Quaternion()).setFromAxisAngle(new THREE.Vector3(0, 1, 0), orientation)
+      nodes['spine002'].quaternion.copy(newQuaternion)
     }
-  }, [rotation, nodes['spine002']])
+  }, [orientation, nodes['spine002']])
 
   useEffect(() => { 
     if (!scene) return
@@ -118,8 +117,22 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
   }, [currentAnimation])
 
   return (
-    <group {...props} ref={CharacterOrigin} position={CHARACTER_ORIGIN} rotation={[0, Math.PI, 0]} dispose={null}>
-      <primitive object={scene} scale={scale} userData={{ isCharacter: true }} />
-    </group>
+    <>
+      <group {...props} ref={CharacterOrigin} position={CHARACTER_ORIGIN} rotation={[0, 0, 0]} dispose={null}>
+        <primitive object={scene} scale={scale} userData={{ isCharacter: true }} />
+        <group ref={rightIKTargetRef} >
+          <axesHelper args={[1]} />
+        </group>
+        <group ref={leftIKTargetRef} >
+          <axesHelper args={[1]} />
+        </group>
+      </group>
+      {rightController?.inputSource?.targetRaySpace && (
+        <XRSpace ref={rightControllerRef} space={rightController.inputSource.targetRaySpace}/>
+      )}
+      {leftController?.inputSource?.targetRaySpace && (
+        <XRSpace ref={leftControllerRef} space={leftController.inputSource.targetRaySpace}/>
+      )}
+    </>
   )
 }
