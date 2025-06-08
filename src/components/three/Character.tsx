@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { CCDIKSolver, CCDIKHelper } from 'three/addons/animation/CCDIKSolver.js';
 import React, { JSX, useEffect, useRef } from 'react'
 import { useGLTF, useAnimations } from '@react-three/drei'
 import { useModels } from '@/context/AppContext'
@@ -29,7 +30,11 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
   const UNSET_THICKNESS = 0
   const FALLBACK_ROUGHNESS = 0.1 
   const FALLBACK_THICKNESS = 1
-  const CHARACTER_ORIGIN = new THREE.Vector3(0, 0, -5)
+  const CHARACTER_ORIGIN = new THREE.Vector3(0, 0, -4)
+  const ikSolverRef = useRef<CCDIKSolver | null>(null)
+  const ikHelperRef = useRef<CCDIKHelper | null>(null)
+  const skinnedMeshRef = useRef<THREE.SkinnedMesh | null>(null)
+  const targetBoneRef = useRef<THREE.Bone | null>(null)
 
   useEffect(() => { // Add placeholder box to head joint
     if (nodes['spine005']) {
@@ -42,20 +47,98 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
     }
   }, [nodes['spine005']])
 
+  useEffect(() => {
+    // Find the skinned mesh in the model
+    scene.traverse((child) => {
+      if (child instanceof THREE.SkinnedMesh) {
+        skinnedMeshRef.current = child
+      }
+    })
+  }, [scene])
+
+  useEffect(() => {
+    if (!nodes['upper_armR'] || !nodes['forearmR'] || !nodes['handR'] || !rightIKTargetRef.current || !skinnedMeshRef.current) return
+
+    const mesh = skinnedMeshRef.current
+    const skeleton = mesh.skeleton
+    const bones = skeleton.bones
+
+    console.log('Creating target bone...')
+    // Create target bone if it doesn't exist
+    if (!targetBoneRef.current) {
+      targetBoneRef.current = new THREE.Bone()
+      targetBoneRef.current.name = 'rightIKTarget' // Give it a name for debugging
+      skeleton.bones.push(targetBoneRef.current)
+      skeleton.boneInverses.push(new THREE.Matrix4())
+      console.log('Target bone created:', targetBoneRef.current)
+    }
+
+    // Find bone indices
+    const upperArmIndex = bones.findIndex(bone => bone.name === 'upper_armR')
+    const forearmIndex = bones.findIndex(bone => bone.name === 'forearmR')
+    const handIndex = bones.findIndex(bone => bone.name === 'handR')
+    const targetIndex = bones.length - 1 // The target bone is the last one we added
+
+    console.log('Bone indices:', { upperArmIndex, forearmIndex, handIndex, targetIndex })
+
+    if (upperArmIndex === -1 || forearmIndex === -1 || handIndex === -1) return
+
+    // Create IK chain
+    const ikChain = [
+      {
+        target: targetIndex,
+        effector: handIndex,
+        links: [
+          {
+            index: upperArmIndex,
+            rotationMin: new THREE.Vector3(-Math.PI, -Math.PI, -Math.PI),
+            rotationMax: new THREE.Vector3(Math.PI, Math.PI, Math.PI)
+          },
+          {
+            index: forearmIndex,
+            rotationMin: new THREE.Vector3(-Math.PI, -Math.PI, -Math.PI),
+            rotationMax: new THREE.Vector3(Math.PI, Math.PI, Math.PI)
+          }
+        ]
+      }
+    ]
+
+    // Create IK solver
+    ikSolverRef.current = new CCDIKSolver(mesh, ikChain)
+    
+    // Create IK helper for debugging
+    ikHelperRef.current = new CCDIKHelper(mesh, ikChain)
+    ikHelperRef.current.visible = true
+    mesh.add(ikHelperRef.current)
+  }, [nodes, scene])
+
   useFrame(() => { // Control character with tracking
     if (nodes['spine005']) {
       nodes['spine005'].quaternion.copy(camera.quaternion)
       nodes['spine005'].rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), Math.PI)
     }
 
-    if (rightControllerRef.current && rightIKTargetRef.current) {
+    if (rightControllerRef.current && rightIKTargetRef.current && targetBoneRef.current && nodes['handR']) {
       rightIKTargetRef.current.position.copy(
-        rightControllerRef.current?.getWorldPosition(new THREE.Vector3()).multiplyScalar(2)
+        rightControllerRef.current?.getWorldPosition(new THREE.Vector3()).multiplyScalar(2.5)
       )
       rightIKTargetRef.current.quaternion.copy(
         rightControllerRef.current?.getWorldQuaternion(new THREE.Quaternion())
       )
+
+      // Update target bone position to match the IK target
+      targetBoneRef.current.position.copy(rightIKTargetRef.current.getWorldPosition(new THREE.Vector3()))
+      targetBoneRef.current.quaternion.copy(rightIKTargetRef.current.getWorldQuaternion(new THREE.Quaternion()))
+      targetBoneRef.current.updateMatrixWorld(true) // Force matrix update
+
+      // Update IK solver
+      if (ikSolverRef.current) {
+        ikSolverRef.current.update()
+      }
+
+      nodes['handR'].quaternion.copy(rightControllerRef.current?.getWorldQuaternion(new THREE.Quaternion()))
     }
+
 
     if (leftControllerRef.current && leftIKTargetRef.current) {
       leftIKTargetRef.current.position.copy(
