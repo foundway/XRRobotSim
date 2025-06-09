@@ -1,13 +1,14 @@
 import * as THREE from 'three'
 import { CCDIKSolver, CCDIKHelper } from 'three/addons/animation/CCDIKSolver.js';
 import React, { JSX, useEffect, useRef } from 'react'
-import { useGLTF, useAnimations } from '@react-three/drei'
+import { useGLTF, useAnimations, Box } from '@react-three/drei'
 import { useModels } from '@/context/AppContext'
 import { useModelStore } from '@/store/ModelStore'
 import { useSceneStore } from '@/store/SceneStore'
 import { useAnimationStore } from '@/store/AnimationStore'
 import { useFrame, useThree } from '@react-three/fiber'
 import { useXRInputSourceState, XRSpace } from '@react-three/xr'
+import { Axis3D } from 'lucide-react';
 
 export const Character = (props: JSX.IntrinsicElements['group']) => {  
   const { currentAnimation, setCurrentAnimation, setAnimations, orientation } = useAnimationStore()
@@ -48,7 +49,7 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
     }
   }, [nodes['spine005']])
 
-  useEffect(() => {
+  useEffect(() => { // Find the skinned mesh in the model
     // Find the skinned mesh in the model
     scene.traverse((child) => {
       if (child instanceof THREE.SkinnedMesh) {
@@ -57,7 +58,7 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
     })
   }, [scene])
 
-  useEffect(() => {
+  useEffect(() => { // Set up IK solver
     if (!nodes['upper_armR'] || !nodes['forearmR'] || !nodes['handR'] || !rightIKTargetRef.current || !skinnedMeshRef.current) return
 
     const mesh = skinnedMeshRef.current
@@ -92,14 +93,15 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
         links: [
           {
             index: upperArmIndex,
-            rotationMin: new THREE.Vector3(-Math.PI, -Math.PI, -Math.PI),
-            rotationMax: new THREE.Vector3(Math.PI, Math.PI, Math.PI)
+            rotationMin: new THREE.Vector3(-Math.PI/2, -Math.PI, Math.PI/4),
+            rotationMax: new THREE.Vector3(Math.PI/2, Math.PI, Math.PI)
           }, {
             index: forearmIndex,
-            rotationMin: new THREE.Vector3(-Math.PI, -Math.PI, -Math.PI),
-            rotationMax: new THREE.Vector3(Math.PI, Math.PI, Math.PI)
+            rotationMin: new THREE.Vector3(0, 0, Math.PI/16),
+            rotationMax: new THREE.Vector3(0, 0, Math.PI/1.5)
           }
-        ]
+        ],
+        iteration: 3,
       }
     ]
 
@@ -108,6 +110,56 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
     ikHelperRef.current.visible = true
     parentRef.current?.add(ikHelperRef.current)
   }, [nodes, scene])
+
+  
+  useEffect(() => { // Set material properties
+    if (!scene) return
+    scene.traverse((child) => {
+      if (child instanceof THREE.Mesh && child.material instanceof THREE.MeshPhysicalMaterial && child.material.transmission > 0) {
+        child.material.transparent = false
+        if (child.material.roughness == UNSET_ROUGHNESS) {
+          child.material.roughness = FALLBACK_ROUGHNESS
+        }
+        if (child.material.thickness == UNSET_THICKNESS) {
+          child.material.thickness = FALLBACK_THICKNESS
+        }
+        child.material.side = THREE.FrontSide
+      }
+    })
+  }, [scene])
+  
+  useEffect(() => { // Rotate waist to match orientation
+    if (nodes['spine002'] != null) {
+      const newQuaternion = (new THREE.Quaternion()).setFromAxisAngle(new THREE.Vector3(0, 1, 0), orientation)
+      nodes['spine002'].quaternion.copy(newQuaternion)
+    }
+  }, [orientation, nodes['spine002']])
+  
+  useEffect(() => { // Set scene center and radius
+    if (!scene) return
+    const box = new THREE.Box3().setFromObject(scene)
+    const size = box.getSize(new THREE.Vector3())
+    const radius = Math.max(Math.max(size.x, size.y), size.z)
+    const center = box.getCenter(new THREE.Vector3())
+    const min = box.min
+    setCenteringOffset(new THREE.Vector3(-center.x, -min.y, -center.z))
+    setOrbitCenter(size.y/2)
+    setStageRadius(radius)
+  }, [scene])
+  
+  useEffect(() => { // Set animation list and play first animation on load
+    setAnimations(animations)
+    if (animations && animations.length > 0) {
+      setCurrentAnimation(animations[0].name)
+    } 
+  }, [animations, setAnimations, setCurrentAnimation])
+  
+  useEffect(() => { // Change animation
+    actions[currentAnimation]?.reset().fadeIn(0.5).play()
+    return () => {
+      actions[currentAnimation]?.fadeOut(0.5)
+    }
+  }, [currentAnimation])
 
   useFrame(() => { // Control character with tracking
     if (nodes['spine005']) {
@@ -146,59 +198,12 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
       )
     }
   })
-
-  useEffect(() => { 
-    if (!scene) return
-    scene.traverse((child) => {
-      if (child instanceof THREE.Mesh && child.material instanceof THREE.MeshPhysicalMaterial && child.material.transmission > 0) {
-        child.material.transparent = false
-        if (child.material.roughness == UNSET_ROUGHNESS) {
-          child.material.roughness = FALLBACK_ROUGHNESS
-        }
-        if (child.material.thickness == UNSET_THICKNESS) {
-          child.material.thickness = FALLBACK_THICKNESS
-        }
-        child.material.side = THREE.FrontSide
-      }
-    })
-  }, [scene])
-
-  useEffect(() => {
-    if (nodes['spine002'] != null) {
-      const newQuaternion = (new THREE.Quaternion()).setFromAxisAngle(new THREE.Vector3(0, 1, 0), orientation)
-      nodes['spine002'].quaternion.copy(newQuaternion)
-    }
-  }, [orientation, nodes['spine002']])
-
-  useEffect(() => { 
-    if (!scene) return
-    const box = new THREE.Box3().setFromObject(scene)
-    const size = box.getSize(new THREE.Vector3())
-    const radius = Math.max(Math.max(size.x, size.y), size.z)
-    const center = box.getCenter(new THREE.Vector3())
-    const min = box.min
-    setCenteringOffset(new THREE.Vector3(-center.x, -min.y, -center.z))
-    setOrbitCenter(size.y/2)
-    setStageRadius(radius)
-  }, [scene])
-
-  useEffect(() => { // Set animation list and play first animation on load
-    setAnimations(animations)
-    if (animations && animations.length > 0) {
-      setCurrentAnimation(animations[0].name)
-    } 
-  }, [animations, setAnimations, setCurrentAnimation])
-
-  useEffect(() => { // Change animation
-    actions[currentAnimation]?.reset().fadeIn(0.5).play()
-    return () => {
-      actions[currentAnimation]?.fadeOut(0.5)
-    }
-  }, [currentAnimation])
-
+  
   return (
     <>
-      <group ref={parentRef} />
+      <group ref={parentRef} >
+        <axesHelper args={[1]} position={nodes['upper_armR'].getWorldPosition(new THREE.Vector3())} quaternion={nodes['upper_armR'].getWorldQuaternion(new THREE.Quaternion())} />
+      </group>
       <group {...props} ref={CharacterOrigin} position={CHARACTER_ORIGIN} rotation={[0, 0, 0]} dispose={null}>
         <primitive object={scene} scale={scale} userData={{ isCharacter: true }} />
         <group ref={rightIKTargetRef} >
