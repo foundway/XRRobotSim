@@ -6,6 +6,7 @@ import { Character } from '@/components/three/Character'
 import { Environment } from '@/components/three/Environment'
 import { MainMenu } from '@/components/ui/MainMenu'
 import { useSceneStore } from '@/store/SceneStore'
+import ExampleFX from './exampleParticles'
 
 const Scene = () => {
   const { showGrid, orbitCenter, stageRadius } = useSceneStore()
@@ -38,6 +39,7 @@ const Scene = () => {
           renderOrder={-1}
         />
       )}
+      <ExampleFX />
       <XROrigin position={[0, 0, 0]} >
         <MainMenu />
       </XROrigin>

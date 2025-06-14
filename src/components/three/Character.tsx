@@ -93,8 +93,10 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
         links: [
           {
             index: upperArmIndex,
-            rotationMin: new THREE.Vector3(-Math.PI/2, -Math.PI, Math.PI/4),
-            rotationMax: new THREE.Vector3(Math.PI/2, Math.PI, Math.PI)
+            // rotationMin: new THREE.Vector3(-Math.PI/2, -Math.PI, Math.PI/4),
+            // rotationMax: new THREE.Vector3(Math.PI/2, Math.PI, Math.PI)
+            rotationMin: new THREE.Vector3(-Math.PI/2, -Math.PI, 0),
+            rotationMax: new THREE.Vector3(0, Math.PI/8, 0)
           }, {
             index: forearmIndex,
             rotationMin: new THREE.Vector3(0, 0, Math.PI/16),
