@@ -1,9 +1,9 @@
+import * as THREE from "three";
 import { VFXEmitter, VFXParticles, RenderMode, AppearanceMode } from "wawa-vfx";
 
 const ExampleFX = () => {
   return (
     <>
-      {/* Step 1: Define your particle system */}
       <VFXParticles
         name="particles" // A unique identifier for this particle system
         settings={{
@@ -16,9 +16,9 @@ const ExampleFX = () => {
           appearance: AppearanceMode.Square, // Define the default appearance to be plane (default) or circular
           easeFunction: "easeLinear", // add easing to the particle animations (see EaseFunction in vfxs/types.ts)
         }}
+        alphaMap={new THREE.TextureLoader().load("https://rawcdn.githack.com/pmndrs/drei-assets/9225a9f1fbd449d9411125c2f419b843d0308c9f/cloud.png")}
       />
 
-      {/* Step 2: Define your emitter */}
       <VFXEmitter
         debug // Show debug visualization
         emitter="particles" // Target the particle system by name
