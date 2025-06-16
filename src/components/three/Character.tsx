@@ -91,15 +91,14 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
         links: [
           {
             index: forearmIndex,
-            rotationMin: new THREE.Vector3(0, 0, Math.PI/16),
+            rotationMin: new THREE.Vector3(0, 0, 0.1),
             rotationMax: new THREE.Vector3(0, 0, Math.PI/1.5)
           }, {
             index: upperArmIndex,
-            rotationMin: new THREE.Vector3(-Math.PI/2, -Math.PI/4, 0),
-            rotationMax: new THREE.Vector3(0, Math.PI/2, Math.PI/2)
+            rotationMin: new THREE.Vector3(-Math.PI/2, -Math.PI/2, 0.1),
+            rotationMax: new THREE.Vector3(-0.1, Math.PI/2, Math.PI/2)
           }
         ],
-        iteration: 3,
       }
     ]
 
@@ -183,7 +182,7 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
         ikSolverRef.current.update()
       }
 
-      nodes['handR'].quaternion.copy(rightControllerRef.current?.getWorldQuaternion(new THREE.Quaternion()))
+      // nodes['handR'].quaternion.copy(rightControllerRef.current?.getWorldQuaternion(new THREE.Quaternion()))
     }
 
 
@@ -205,10 +204,10 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
       <group {...props} ref={CharacterOrigin} position={CHARACTER_ORIGIN} rotation={[0, 0, 0]} dispose={null}>
         <primitive object={scene} scale={scale} userData={{ isCharacter: true }} />
         <group ref={rightIKTargetRef} >
-          <axesHelper args={[1]} />
+          <axesHelper args={[0.5]} />
         </group>
         <group ref={leftIKTargetRef} >
-          <axesHelper args={[1]} />
+          <axesHelper args={[0.5]} />
         </group>
       </group>
       {rightController?.inputSource?.targetRaySpace && (
