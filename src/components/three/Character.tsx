@@ -76,14 +76,12 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
     }
 
     // Find bone indices
+    const shoulderIndex = bones.findIndex(bone => bone.name === 'shoulderR')
     const upperArmIndex = bones.findIndex(bone => bone.name === 'upper_armR')
     const forearmIndex = bones.findIndex(bone => bone.name === 'forearmR')
     const handIndex = bones.findIndex(bone => bone.name === 'handR')
     const targetIndex = bones.length - 1 // The target bone is the last one we added
-
-    console.log('Bone indices:', { upperArmIndex, forearmIndex, handIndex, targetIndex })
-
-    if (upperArmIndex === -1 || forearmIndex === -1 || handIndex === -1) return
+    if (shoulderIndex === -1 || upperArmIndex === -1 || forearmIndex === -1 || handIndex === -1) return
 
     // Create IK chain
     const ikChain = [
@@ -92,15 +90,13 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
         effector: handIndex,
         links: [
           {
-            index: upperArmIndex,
-            // rotationMin: new THREE.Vector3(-Math.PI/2, -Math.PI, Math.PI/4),
-            // rotationMax: new THREE.Vector3(Math.PI/2, Math.PI, Math.PI)
-            rotationMin: new THREE.Vector3(-Math.PI/2, -Math.PI, 0),
-            rotationMax: new THREE.Vector3(0, Math.PI/8, 0)
-          }, {
             index: forearmIndex,
             rotationMin: new THREE.Vector3(0, 0, Math.PI/16),
             rotationMax: new THREE.Vector3(0, 0, Math.PI/1.5)
+          }, {
+            index: upperArmIndex,
+            rotationMin: new THREE.Vector3(-Math.PI/2, -Math.PI/4, 0),
+            rotationMax: new THREE.Vector3(0, Math.PI/2, Math.PI/2)
           }
         ],
         iteration: 3,
