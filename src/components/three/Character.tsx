@@ -1,19 +1,16 @@
 import * as THREE from 'three'
 import { CCDIKSolver, CCDIKHelper } from 'three/addons/animation/CCDIKSolver.js';
 import React, { JSX, useEffect, useRef } from 'react'
-import { useGLTF, useAnimations, Box } from '@react-three/drei'
+import { useGLTF, useAnimations } from '@react-three/drei'
 import { useModels } from '@/context/AppContext'
 import { useModelStore } from '@/store/ModelStore'
-import { useSceneStore } from '@/store/SceneStore'
 import { useAnimationStore } from '@/store/AnimationStore'
-import { useFrame, useThree } from '@react-three/fiber'
+import { useFrame } from '@react-three/fiber'
 import { useXRInputSourceState, XRSpace } from '@react-three/xr'
-import { Axis3D } from 'lucide-react';
 
 export const Character = (props: JSX.IntrinsicElements['group']) => {  
   const { currentAnimation, setCurrentAnimation, setAnimations, orientation } = useAnimationStore()
-  const { scale, isMenuVisible } = useModelStore()
-  const { centeringOffset, setOrbitCenter, setStageRadius, setCenteringOffset } = useSceneStore()
+  const { scale } = useModelStore()
   const rightController = useXRInputSourceState('controller', 'right')
   const leftController = useXRInputSourceState('controller', 'left')
   const { currentModel } = useModels()
@@ -21,12 +18,10 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
   const { scene, nodes, animations } = useGLTF(modelUrl)
   const group = React.useRef<THREE.Group>(null)
   const parentRef = React.useRef<THREE.Object3D>(null)
-  const rightIKTargetRef = React.useRef<THREE.Object3D | null>(null)
   const leftIKTargetRef = React.useRef<THREE.Object3D | null>(null)
   const rightControllerRef = React.useRef<THREE.Object3D | null>(null)
   const leftControllerRef = React.useRef<THREE.Object3D | null>(null)
   const { actions } = useAnimations(animations, group)
-  const { camera } = useThree()
   const CharacterOrigin = useRef<THREE.Object3D>(null)
   const UNSET_ROUGHNESS = 1
   const UNSET_THICKNESS = 0
@@ -36,7 +31,6 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
   const ikSolverRef = useRef<CCDIKSolver | null>(null)
   const ikHelperRef = useRef<CCDIKHelper | null>(null)
   const skinnedMeshRef = useRef<THREE.SkinnedMesh | null>(null)
-  const targetBoneRef = useRef<THREE.Bone | null>(null)
 
   useEffect(() => { // Add placeholder box to head joint
     if (nodes['spine005']) {
@@ -50,7 +44,6 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
   }, [nodes['spine005']])
 
   useEffect(() => { // Find the skinned mesh in the model
-    // Find the skinned mesh in the model
     scene.traverse((child) => {
       if (child instanceof THREE.SkinnedMesh) {
         skinnedMeshRef.current = child
@@ -59,42 +52,22 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
   }, [scene])
 
   useEffect(() => { // Set up IK solver
-    if (!nodes['upper_armR'] || !nodes['forearmR'] || !nodes['handR'] || !rightIKTargetRef.current || !skinnedMeshRef.current) return
+    if (!nodes['upper_armR'] || !nodes['forearmR'] || !nodes['handR'] || !nodes['ikhandR'] || !skinnedMeshRef.current) return
 
     const mesh = skinnedMeshRef.current
     const skeleton = mesh.skeleton
     const bones = skeleton.bones
-
-    console.log('Creating target bone...')
-    // Create target bone if it doesn't exist
-    if (!targetBoneRef.current) {
-      targetBoneRef.current = new THREE.Bone()
-      targetBoneRef.current.name = 'rightIKTarget' // Give it a name for debugging
-      skeleton.bones.push(targetBoneRef.current)
-      skeleton.boneInverses.push(new THREE.Matrix4())
-      console.log('Target bone created:', targetBoneRef.current)
-    }
-
-    // Find bone indices
-    const shoulderIndex = bones.findIndex(bone => bone.name === 'shoulderR')
-    const upperArmIndex = bones.findIndex(bone => bone.name === 'upper_armR')
-    const forearmIndex = bones.findIndex(bone => bone.name === 'forearmR')
-    const handIndex = bones.findIndex(bone => bone.name === 'handR')
-    const targetIndex = bones.length - 1 // The target bone is the last one we added
-    if (shoulderIndex === -1 || upperArmIndex === -1 || forearmIndex === -1 || handIndex === -1) return
-
-    // Create IK chain
     const ikChain = [
       {
-        target: targetIndex,
-        effector: handIndex,
+        target: bones.findIndex(bone => bone.name === 'ikhandR'),
+        effector: bones.findIndex(bone => bone.name === 'handR'),
         links: [
           {
-            index: forearmIndex,
+            index: bones.findIndex(bone => bone.name === 'forearmR'),
             rotationMin: new THREE.Vector3(0, 0, 0.1),
             rotationMax: new THREE.Vector3(0, 0, Math.PI/1.5)
           }, {
-            index: upperArmIndex,
+            index: bones.findIndex(bone => bone.name === 'upper_armR'),
             rotationMin: new THREE.Vector3(-Math.PI/2, -Math.PI/2, 0.1),
             rotationMax: new THREE.Vector3(-0.1, Math.PI/2, Math.PI/2)
           }
@@ -132,18 +105,6 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
     }
   }, [orientation, nodes['spine002']])
   
-  useEffect(() => { // Set scene center and radius
-    if (!scene) return
-    const box = new THREE.Box3().setFromObject(scene)
-    const size = box.getSize(new THREE.Vector3())
-    const radius = Math.max(Math.max(size.x, size.y), size.z)
-    const center = box.getCenter(new THREE.Vector3())
-    const min = box.min
-    setCenteringOffset(new THREE.Vector3(-center.x, -min.y, -center.z))
-    setOrbitCenter(size.y/2)
-    setStageRadius(radius)
-  }, [scene])
-  
   useEffect(() => { // Set animation list and play first animation on load
     setAnimations(animations)
     if (animations && animations.length > 0) {
@@ -159,32 +120,19 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
   }, [currentAnimation])
 
   useFrame(() => { // Control character with tracking
-    if (nodes['spine005']) {
-      nodes['spine005'].quaternion.copy(camera.quaternion)
-      nodes['spine005'].rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), Math.PI)
-    }
-
-    if (rightControllerRef.current && rightIKTargetRef.current && targetBoneRef.current && nodes['handR']) {
-      rightIKTargetRef.current.position.copy(
-        rightControllerRef.current?.getWorldPosition(new THREE.Vector3()).multiplyScalar(2)
+    if (rightControllerRef.current) {
+      nodes['ikhandR'].position.copy(
+        rightControllerRef.current?.getWorldPosition(new THREE.Vector3()).applyAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI).multiplyScalar(2)
       )
-      rightIKTargetRef.current.quaternion.copy(
-        rightControllerRef.current?.getWorldQuaternion(new THREE.Quaternion())
+      nodes['ikhandR'].quaternion.copy(
+        rightControllerRef.current?.getWorldQuaternion(new THREE.Quaternion()).premultiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI))
       )
+      nodes['ikhandR'].updateMatrixWorld(true) // Force matrix update
 
-      // Update target bone position to match the IK target
-      targetBoneRef.current.position.copy(rightIKTargetRef.current.getWorldPosition(new THREE.Vector3()))
-      targetBoneRef.current.quaternion.copy(rightIKTargetRef.current.getWorldQuaternion(new THREE.Quaternion()))
-      targetBoneRef.current.updateMatrixWorld(true) // Force matrix update
-
-      // Update IK solver
       if (ikSolverRef.current) {
         ikSolverRef.current.update()
       }
-
-      // nodes['handR'].quaternion.copy(rightControllerRef.current?.getWorldQuaternion(new THREE.Quaternion()))
     }
-
 
     if (leftControllerRef.current && leftIKTargetRef.current) {
       leftIKTargetRef.current.position.copy(
@@ -202,12 +150,8 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
         <axesHelper args={[1]} position={nodes['upper_armR'].getWorldPosition(new THREE.Vector3())} quaternion={nodes['upper_armR'].getWorldQuaternion(new THREE.Quaternion())} />
       </group>
       <group {...props} ref={CharacterOrigin} position={CHARACTER_ORIGIN} rotation={[0, 0, 0]} dispose={null}>
-        <primitive object={scene} scale={scale} userData={{ isCharacter: true }} />
-        <group ref={rightIKTargetRef} >
-          <axesHelper args={[0.5]} />
-        </group>
-        <group ref={leftIKTargetRef} >
-          <axesHelper args={[0.5]} />
+        <group rotation={[0, Math.PI, 0]}>
+          <primitive object={scene} scale={scale} userData={{ isCharacter: true }} />
         </group>
       </group>
       {rightController?.inputSource?.targetRaySpace && (

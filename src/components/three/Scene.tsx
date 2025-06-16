@@ -14,17 +14,19 @@ const Scene = () => {
   const { session } = useXR()
 
   useEffect(() => {
-    camera.position.z = stageRadius * 1.5
-    camera.position.y = orbitCenter * 1.333
+    camera.lookAt(0, 2, 3)
+    camera.position.x = 0
+    camera.position.z = 0
+    camera.position.y = 1
     camera.updateProjectionMatrix()
-  }, [stageRadius, camera])
+  }, [camera])
 
   return (
     <>
       <color attach="background" args={['#333333']} />
       <Environment />
       <Character />
-      {!session && <OrbitControls target={[0, orbitCenter, 0]} />}
+      {!session && <OrbitControls target={[0, orbitCenter, -3]} />}
       {showGrid && (
         <Grid
           position={[0, 0, 0]}

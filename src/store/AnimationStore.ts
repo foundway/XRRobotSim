@@ -15,7 +15,7 @@ export const useAnimationStore = create<AnimationState>((set) => ({
   setCurrentAnimation: (animationName) => set({ currentAnimation: animationName }),
   animations: [],
   setAnimations: (animations) => set({ animations }),
-  orientation: Math.PI,
+  orientation: 0,
   setOrientation: (rotation) => set({ orientation: rotation }),
   addOrientation: (delta) => set((state) => ({ orientation: state.orientation + delta })),
 })) 

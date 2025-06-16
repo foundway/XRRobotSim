@@ -3,7 +3,7 @@ import { VFXEmitter, VFXParticles, RenderMode, AppearanceMode } from "wawa-vfx";
 
 const ExampleFX = () => {
   return (
-    <>
+    <group position={[0, 0, 3]}>
       <VFXParticles
         name="particles" // A unique identifier for this particle system
         settings={{
@@ -49,7 +49,7 @@ const ExampleFX = () => {
           colorEnd: ["red"],
         }}
       />
-    </>
+    </group>
   );
 };
 
