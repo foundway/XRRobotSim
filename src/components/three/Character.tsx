@@ -1,4 +1,4 @@
-import * as THREE from 'three'
+import { Group, Mesh, BoxGeometry, MeshBasicMaterial, MeshPhysicalMaterial, Vector3, Quaternion, SkinnedMesh, FrontSide, Object3D} from 'three'
 import { CCDIKSolver, CCDIKHelper } from 'three/addons/animation/CCDIKSolver.js';
 import React, { JSX, useEffect, useRef } from 'react'
 import { useGLTF, useAnimations } from '@react-three/drei'
@@ -16,27 +16,26 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
   const { currentModel } = useModels()
   const modelUrl = currentModel.url
   const { scene, nodes, animations } = useGLTF(modelUrl)
-  const group = React.useRef<THREE.Group>(null)
-  const parentRef = React.useRef<THREE.Object3D>(null)
-  const leftIKTargetRef = React.useRef<THREE.Object3D | null>(null)
-  const rightControllerRef = React.useRef<THREE.Object3D | null>(null)
-  const leftControllerRef = React.useRef<THREE.Object3D | null>(null)
+  const group = React.useRef<Group>(null)
+  const parentRef = React.useRef<Object3D>(null)
+  const rightControllerRef = React.useRef<Object3D | null>(null)
+  const leftControllerRef = React.useRef<Object3D | null>(null)
   const { actions } = useAnimations(animations, group)
-  const CharacterOrigin = useRef<THREE.Object3D>(null)
+  const CharacterOrigin = useRef<Object3D>(null)
   const UNSET_ROUGHNESS = 1
   const UNSET_THICKNESS = 0
   const FALLBACK_ROUGHNESS = 0.1 
   const FALLBACK_THICKNESS = 1
-  const CHARACTER_ORIGIN = new THREE.Vector3(0, 0, -3)
+  const CHARACTER_ORIGIN = new Vector3(0, 0, -3)
   const ikSolverRef = useRef<CCDIKSolver | null>(null)
   const ikHelperRef = useRef<CCDIKHelper | null>(null)
-  const skinnedMeshRef = useRef<THREE.SkinnedMesh | null>(null)
+  const skinnedMeshRef = useRef<SkinnedMesh | null>(null)
 
   useEffect(() => { // Add placeholder box to head joint
     if (nodes['spine005']) {
-      const box = new THREE.Mesh(
-        new THREE.BoxGeometry(0.2, 0.4, 0.2),
-        new THREE.MeshBasicMaterial({ color: 'blue', wireframe: true })
+      const box = new Mesh(
+        new BoxGeometry(0.2, 0.4, 0.2),
+        new MeshBasicMaterial({ color: 'blue', wireframe: true })
       )
       box.position.set(0, 0.2, 0) // Position slightly above the head
       nodes['spine005'].add(box)
@@ -45,18 +44,17 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
 
   useEffect(() => { // Find the skinned mesh in the model
     scene.traverse((child) => {
-      if (child instanceof THREE.SkinnedMesh) {
+      if (child instanceof SkinnedMesh) {
         skinnedMeshRef.current = child
       }
     })
   }, [scene])
 
   useEffect(() => { // Set up IK solver
-    if (!nodes['upper_armR'] || !nodes['forearmR'] || !nodes['handR'] || !nodes['ikhandR'] || !skinnedMeshRef.current) return
+    if (!skinnedMeshRef.current) return
 
     const mesh = skinnedMeshRef.current
-    const skeleton = mesh.skeleton
-    const bones = skeleton.bones
+    const bones = mesh.skeleton.bones
     const ikChain = [
       {
         target: bones.findIndex(bone => bone.name === 'ikhandR'),
@@ -64,12 +62,35 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
         links: [
           {
             index: bones.findIndex(bone => bone.name === 'forearmR'),
-            rotationMin: new THREE.Vector3(0, 0, 0.1),
-            rotationMax: new THREE.Vector3(0, 0, Math.PI/1.5)
+            rotationMin: new Vector3(0, 0, 0.1),
+            rotationMax: new Vector3(0, 0, 2),
           }, {
             index: bones.findIndex(bone => bone.name === 'upper_armR'),
-            rotationMin: new THREE.Vector3(-Math.PI/2, -Math.PI/2, 0.1),
-            rotationMax: new THREE.Vector3(-0.1, Math.PI/2, Math.PI/2)
+            rotationMin: new Vector3(-1.5, 0, -0.8),
+            rotationMax: new Vector3(0.8, 0, 1.5),
+          }, {
+            index: bones.findIndex(bone => bone.name === 'shoulderR'),
+            rotationMin: new Vector3(0, -1.5, 0),
+            rotationMax: new Vector3(0, 1.5, 0),
+          }
+        ],
+      },
+      {
+        target: bones.findIndex(bone => bone.name === 'ikhandL'),
+        effector: bones.findIndex(bone => bone.name === 'handL'),
+        links: [
+          {
+            index: bones.findIndex(bone => bone.name === 'forearmL'),
+            rotationMin: new Vector3(0, 0, -2),
+            rotationMax: new Vector3(0, 0, -0.1),
+          }, {
+            index: bones.findIndex(bone => bone.name === 'upper_armL'),
+            rotationMin: new Vector3(-1.5, 0, -1.5),
+            rotationMax: new Vector3(0.8, 0, 0.8),
+          }, {
+            index: bones.findIndex(bone => bone.name === 'shoulderL'),
+            rotationMin: new Vector3(0, -1.5, 0),
+            rotationMax: new Vector3(0, 1.5, 0),
           }
         ],
       }
@@ -81,11 +102,10 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
     parentRef.current?.add(ikHelperRef.current)
   }, [nodes, scene])
 
-  
   useEffect(() => { // Set material properties
     if (!scene) return
     scene.traverse((child) => {
-      if (child instanceof THREE.Mesh && child.material instanceof THREE.MeshPhysicalMaterial && child.material.transmission > 0) {
+      if (child instanceof Mesh && child.material instanceof MeshPhysicalMaterial && child.material.transmission > 0) {
         child.material.transparent = false
         if (child.material.roughness == UNSET_ROUGHNESS) {
           child.material.roughness = FALLBACK_ROUGHNESS
@@ -93,14 +113,14 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
         if (child.material.thickness == UNSET_THICKNESS) {
           child.material.thickness = FALLBACK_THICKNESS
         }
-        child.material.side = THREE.FrontSide
+        child.material.side = FrontSide
       }
     })
   }, [scene])
   
   useEffect(() => { // Rotate waist to match orientation
     if (nodes['spine002'] != null) {
-      const newQuaternion = (new THREE.Quaternion()).setFromAxisAngle(new THREE.Vector3(0, 1, 0), orientation)
+      const newQuaternion = (new Quaternion()).setFromAxisAngle(new Vector3(0, 1, 0), orientation)
       nodes['spine002'].quaternion.copy(newQuaternion)
     }
   }, [orientation, nodes['spine002']])
@@ -122,33 +142,26 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
   useFrame(() => { // Control character with tracking
     if (rightControllerRef.current) {
       nodes['ikhandR'].position.copy(
-        rightControllerRef.current?.getWorldPosition(new THREE.Vector3()).applyAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI).multiplyScalar(2)
+        rightControllerRef.current?.getWorldPosition(new Vector3()).applyAxisAngle(new Vector3(0, 1, 0), Math.PI).multiplyScalar(2)
       )
       nodes['ikhandR'].quaternion.copy(
-        rightControllerRef.current?.getWorldQuaternion(new THREE.Quaternion()).premultiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI))
-      )
-      nodes['ikhandR'].updateMatrixWorld(true) // Force matrix update
-
-      if (ikSolverRef.current) {
-        ikSolverRef.current.update()
-      }
-    }
-
-    if (leftControllerRef.current && leftIKTargetRef.current) {
-      leftIKTargetRef.current.position.copy(
-        leftControllerRef.current?.getWorldPosition(new THREE.Vector3()).multiplyScalar(2)
-      )
-      leftIKTargetRef.current.quaternion.copy(
-        leftControllerRef.current?.getWorldQuaternion(new THREE.Quaternion())
+        rightControllerRef.current?.getWorldQuaternion(new Quaternion()).premultiply(new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), Math.PI))
       )
     }
+
+    if (leftControllerRef.current) {
+      nodes['ikhandL'].position.copy(
+        leftControllerRef.current?.getWorldPosition(new Vector3()).applyAxisAngle(new Vector3(0, 1, 0), Math.PI).multiplyScalar(2)
+      )
+      nodes['ikhandL'].quaternion.copy(
+        leftControllerRef.current?.getWorldQuaternion(new Quaternion()).premultiply(new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), Math.PI))
+      )
+    }
+    ikSolverRef.current?.update()
   })
   
   return (
     <>
-      <group ref={parentRef} >
-        <axesHelper args={[1]} position={nodes['upper_armR'].getWorldPosition(new THREE.Vector3())} quaternion={nodes['upper_armR'].getWorldQuaternion(new THREE.Quaternion())} />
-      </group>
       <group {...props} ref={CharacterOrigin} position={CHARACTER_ORIGIN} rotation={[0, 0, 0]} dispose={null}>
         <group rotation={[0, Math.PI, 0]}>
           <primitive object={scene} scale={scale} userData={{ isCharacter: true }} />
@@ -160,6 +173,28 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
       {leftController?.inputSource?.targetRaySpace && (
         <XRSpace ref={leftControllerRef} space={leftController.inputSource.targetRaySpace}/>
       )}
+      <group ref={parentRef} >
+        <axesHelper args={[0.5]} 
+          position={nodes['forearmL'].getWorldPosition(new Vector3())} 
+          quaternion={nodes['forearmL'].getWorldQuaternion(new Quaternion())} 
+        />
+        <axesHelper args={[0.5]} 
+          position={nodes['upper_armL'].getWorldPosition(new Vector3())} 
+          quaternion={nodes['upper_armL'].getWorldQuaternion(new Quaternion())} 
+        />
+        <axesHelper args={[0.5]} 
+          position={nodes['forearmR'].getWorldPosition(new Vector3())} 
+          quaternion={nodes['forearmR'].getWorldQuaternion(new Quaternion())} 
+        />
+        <axesHelper args={[0.5]} 
+          position={nodes['upper_armR'].getWorldPosition(new Vector3())} 
+          quaternion={nodes['upper_armR'].getWorldQuaternion(new Quaternion())} 
+        />
+        <axesHelper args={[0.5]} 
+          position={nodes['shoulderR'].getWorldPosition(new Vector3())} 
+          quaternion={nodes['shoulderR'].getWorldQuaternion(new Quaternion())} 
+        />
+      </group>
     </>
   )
 }
