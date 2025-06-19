@@ -167,10 +167,10 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
           <primitive object={scene} scale={scale} userData={{ isCharacter: true }} />
         </group>
       </group>
-      {rightController?.inputSource?.targetRaySpace && (
+      {rightController?.inputSource?.targetRaySpace && ( // Get controller transform in target ray space. TODO: There might be a better way to do this.
         <XRSpace ref={rightControllerRef} space={rightController.inputSource.targetRaySpace}/>
       )}
-      {leftController?.inputSource?.targetRaySpace && (
+      {leftController?.inputSource?.targetRaySpace && ( // Get controller transform in target ray space. TODO: There might be a better way to do this.
         <XRSpace ref={leftControllerRef} space={leftController.inputSource.targetRaySpace}/>
       )}
       <group ref={parentRef} >
