@@ -5,21 +5,24 @@ import { useGLTF, useAnimations } from '@react-three/drei'
 import { useModels } from '@/context/AppContext'
 import { useModelStore } from '@/store/ModelStore'
 import { useAnimationStore } from '@/store/AnimationStore'
+import { useSceneStore } from '@/store/SceneStore'
 import { useFrame } from '@react-three/fiber'
 import { useXRInputSourceState, XRSpace } from '@react-three/xr'
 
 export const Character = (props: JSX.IntrinsicElements['group']) => {  
   const { currentAnimation, setCurrentAnimation, setAnimations, orientation } = useAnimationStore()
   const { scale } = useModelStore()
+  const { currentModel } = useModels()
+  const { cockpitRef } = useSceneStore()
   const rightController = useXRInputSourceState('controller', 'right')
   const leftController = useXRInputSourceState('controller', 'left')
-  const { currentModel } = useModels()
   const modelUrl = currentModel.url
   const { scene, nodes, animations } = useGLTF(modelUrl)
   const group = React.useRef<Group>(null)
   const parentRef = React.useRef<Object3D>(null)
   const rightControllerRef = React.useRef<Object3D | null>(null)
   const leftControllerRef = React.useRef<Object3D | null>(null)
+  const chestRef = React.useRef<Object3D | null>(null)
   const { actions } = useAnimations(animations, group)
   const CharacterOrigin = useRef<Object3D>(null)
   const UNSET_ROUGHNESS = 1
@@ -32,15 +35,15 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
   const skinnedMeshRef = useRef<SkinnedMesh | null>(null)
 
   useEffect(() => { // Add placeholder box to head joint
-    if (nodes['spine005']) {
+    if (nodes['head']) {
       const box = new Mesh(
         new BoxGeometry(0.2, 0.4, 0.2),
         new MeshBasicMaterial({ color: 'blue', wireframe: true })
       )
       box.position.set(0, 0.2, 0) // Position slightly above the head
-      nodes['spine005'].add(box)
+      nodes['head'].add(box)
     }
-  }, [nodes['spine005']])
+  }, [nodes['head']])
 
   useEffect(() => { // Find the skinned mesh in the model
     scene.traverse((child) => {
@@ -119,11 +122,11 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
   }, [scene])
   
   useEffect(() => { // Rotate waist to match orientation
-    if (nodes['spine002'] != null) {
+    if (nodes['waist'] != null) {
       const newQuaternion = (new Quaternion()).setFromAxisAngle(new Vector3(0, 1, 0), orientation)
-      nodes['spine002'].quaternion.copy(newQuaternion)
+      nodes['waist'].quaternion.copy(newQuaternion)
     }
-  }, [orientation, nodes['spine002']])
+  }, [orientation, nodes['waist']])
   
   useEffect(() => { // Set animation list and play first animation on load
     setAnimations(animations)
@@ -139,25 +142,42 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
     }
   }, [currentAnimation])
 
-  useFrame(() => { // Control character with tracking
+  const ikUpdate = () => {
+    if (!cockpitRef.current) return
+
+    if (chestRef.current) {
+      chestRef.current.position.copy(nodes['chest'].getWorldPosition(new Vector3()))
+      chestRef.current.quaternion.copy(nodes['chest'].getWorldQuaternion(new Quaternion()))
+    }
+
     if (rightControllerRef.current) {
-      nodes['ikhandR'].position.copy(
-        rightControllerRef.current?.getWorldPosition(new Vector3()).applyAxisAngle(new Vector3(0, 1, 0), Math.PI).multiplyScalar(2)
-      )
-      nodes['ikhandR'].quaternion.copy(
-        rightControllerRef.current?.getWorldQuaternion(new Quaternion()).premultiply(new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), Math.PI))
-      )
+      const controllerWorldPos = rightControllerRef.current.getWorldPosition(new Vector3())
+      const controllerWorldQuat = rightControllerRef.current.getWorldQuaternion(new Quaternion())
+      
+      const cockpitWorldMatrix = cockpitRef.current.matrixWorld.clone().invert()
+      const localPos = controllerWorldPos.clone().applyMatrix4(cockpitWorldMatrix)
+      const localQuat = controllerWorldQuat.clone().premultiply(cockpitRef.current.getWorldQuaternion(new Quaternion()).invert())
+      
+      nodes['ikhandR'].position.copy(localPos.multiplyScalar(2))
+      nodes['ikhandR'].quaternion.copy(localQuat)
     }
 
     if (leftControllerRef.current) {
-      nodes['ikhandL'].position.copy(
-        leftControllerRef.current?.getWorldPosition(new Vector3()).applyAxisAngle(new Vector3(0, 1, 0), Math.PI).multiplyScalar(2)
-      )
-      nodes['ikhandL'].quaternion.copy(
-        leftControllerRef.current?.getWorldQuaternion(new Quaternion()).premultiply(new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), Math.PI))
-      )
+      const controllerWorldPos = leftControllerRef.current.getWorldPosition(new Vector3())
+      const controllerWorldQuat = leftControllerRef.current.getWorldQuaternion(new Quaternion())
+      
+      const cockpitWorldMatrix = cockpitRef.current.matrixWorld.clone().invert()
+      const localPos = controllerWorldPos.clone().applyMatrix4(cockpitWorldMatrix)
+      const localQuat = controllerWorldQuat.clone().premultiply(cockpitRef.current.getWorldQuaternion(new Quaternion()).invert())
+      
+      nodes['ikhandL'].position.copy(localPos.multiplyScalar(2))
+      nodes['ikhandL'].quaternion.copy(localQuat)
     }
     ikSolverRef.current?.update()
+  }
+
+  useFrame(() => { 
+    ikUpdate()
   })
   
   return (
@@ -167,14 +187,20 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
           <primitive object={scene} scale={scale} userData={{ isCharacter: true }} />
         </group>
       </group>
+
       {rightController?.inputSource?.targetRaySpace && ( // Get controller transform in target ray space. TODO: There might be a better way to do this.
         <XRSpace ref={rightControllerRef} space={rightController.inputSource.targetRaySpace}/>
       )}
       {leftController?.inputSource?.targetRaySpace && ( // Get controller transform in target ray space. TODO: There might be a better way to do this.
         <XRSpace ref={leftControllerRef} space={leftController.inputSource.targetRaySpace}/>
       )}
+      <mesh ref={chestRef}>
+        <boxGeometry args={[1, 0, 1]} />
+        <meshBasicMaterial color="blue" wireframe={true} />
+      </mesh>
+
       <group ref={parentRef} >
-        <axesHelper args={[0.5]} 
+        {/* <axesHelper args={[0.5]} 
           position={nodes['forearmL'].getWorldPosition(new Vector3())} 
           quaternion={nodes['forearmL'].getWorldQuaternion(new Quaternion())} 
         />
@@ -193,7 +219,7 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
         <axesHelper args={[0.5]} 
           position={nodes['shoulderR'].getWorldPosition(new Vector3())} 
           quaternion={nodes['shoulderR'].getWorldQuaternion(new Quaternion())} 
-        />
+        /> */}
       </group>
     </>
   )

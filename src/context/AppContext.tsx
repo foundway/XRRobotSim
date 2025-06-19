@@ -3,6 +3,7 @@
 //
 
 import { createContext, useContext, useState, ReactNode } from 'react'
+import { Object3D } from 'three'
 
 interface ModelItem {
   name: string
@@ -39,6 +40,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined)
 export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [models, setModels] = useState<ModelItem[]>(Models)
   const [currentModel, setCurrentModel] = useState<ModelItem>(Models[0])
+  
   const addModel = (model: ModelItem) => {
     setModels(prev => [...prev, model])
     setCurrentModel(model)

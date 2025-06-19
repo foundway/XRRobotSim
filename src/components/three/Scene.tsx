@@ -4,6 +4,7 @@ import { OrbitControls, Grid } from '@react-three/drei'
 import { useXR, XROrigin } from '@react-three/xr'
 import { Character } from '@/components/three/Character'
 import { Environment } from '@/components/three/Environment'
+import { Cockpit } from '@/components/three/Cockpit'
 import { MainMenu } from '@/components/ui/MainMenu'
 import { useSceneStore } from '@/store/SceneStore'
 import ExampleFX from './exampleParticles'
@@ -44,6 +45,7 @@ const Scene = () => {
       <ExampleFX />
       <XROrigin position={[0, 0, 0]} >
         <MainMenu />
+        <Cockpit />
       </XROrigin>
     </>
   )
