@@ -8,6 +8,7 @@ import { useAnimationStore } from '@/store/AnimationStore'
 import { useSceneStore } from '@/store/SceneStore'
 import { useFrame } from '@react-three/fiber'
 import { useXRInputSourceState, XRSpace } from '@react-three/xr'
+import { RigidBody, BallCollider } from '@react-three/rapier'
 
 export const Character = (props: JSX.IntrinsicElements['group']) => {  
   const { currentAnimation, setCurrentAnimation, setAnimations, orientation } = useAnimationStore()
@@ -33,6 +34,8 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
   const ikSolverRef = useRef<CCDIKSolver | null>(null)
   const ikHelperRef = useRef<CCDIKHelper | null>(null)
   const skinnedMeshRef = useRef<SkinnedMesh | null>(null)
+  const rightHandRigidBodyRef = useRef<any>(null)
+  const leftHandRigidBodyRef = useRef<any>(null)
 
   useEffect(() => { // Add placeholder box to head joint
     if (nodes['head']) {
@@ -178,6 +181,17 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
 
   useFrame(() => { 
     ikUpdate()
+    
+    // Update hand rigid body positions to follow hand bones
+    if (nodes['handR'] && rightHandRigidBodyRef.current) {
+      const handWorldPos = nodes['handR'].getWorldPosition(new Vector3())
+      rightHandRigidBodyRef.current.setNextKinematicTranslation(handWorldPos)
+    }
+    
+    if (nodes['handL'] && leftHandRigidBodyRef.current) {
+      const handWorldPos = nodes['handL'].getWorldPosition(new Vector3())
+      leftHandRigidBodyRef.current.setNextKinematicTranslation(handWorldPos)
+    }
   })
   
   return (
@@ -185,6 +199,27 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
       <group {...props} ref={CharacterOrigin} position={CHARACTER_ORIGIN} rotation={[0, 0, 0]} dispose={null}>
         <group rotation={[0, Math.PI, 0]}>
           <primitive object={scene} scale={scale} userData={{ isCharacter: true }} />
+            <RigidBody 
+              ref={rightHandRigidBodyRef}
+              mass={1}
+              friction={0.7}
+              restitution={0.9}
+              type="kinematicPosition"
+              userData={{ isCharacterHand: true, hand: 'right' }}
+            >
+              <BallCollider args={[0.2]} />
+            </RigidBody>
+
+            <RigidBody 
+              ref={leftHandRigidBodyRef}
+              mass={1}
+              friction={0.7}
+              restitution={0.9}
+              type="kinematicPosition"
+              userData={{ isCharacterHand: true, hand: 'left' }}
+            >
+              <BallCollider args={[0.2]} />
+            </RigidBody>
         </group>
       </group>
 
@@ -221,6 +256,7 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
           quaternion={nodes['shoulderR'].getWorldQuaternion(new Quaternion())} 
         /> */}
       </group>
+
     </>
   )
 }

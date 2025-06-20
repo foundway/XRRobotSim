@@ -1,7 +1,7 @@
-import React from 'react'
-import { useRef } from 'react'
+import React, { useRef, useState, useEffect } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { XR, createXRStore } from '@react-three/xr'
+import { Physics } from '@react-three/rapier'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue, } from "@/components/ui/select"
 
@@ -108,6 +108,20 @@ const store = createXRStore({
 })
 
 const App = () => {
+  const [enemyCount, setEnemyCount] = useState(0)
+
+  // Listen for enemy count updates
+  useEffect(() => {
+    const handleEnemySpawn = (event: CustomEvent) => {
+      setEnemyCount(event.detail.count)
+    }
+
+    window.addEventListener('enemySpawned', handleEnemySpawn as EventListener)
+    return () => {
+      window.removeEventListener('enemySpawned', handleEnemySpawn as EventListener)
+    }
+  }, [])
+
   return (
     <AppContextProvider>
       <div style={{ width: '100vw', height: '100vh', backgroundColor: 'black' }}>
@@ -117,7 +131,9 @@ const App = () => {
           shadows
         >
           <XR store={store}>
-            <Scene />
+            <Physics debug={true}>
+              <Scene />
+            </Physics>
           </XR>
         </Canvas>
         <div className="pointer-events-auto">
@@ -132,6 +148,13 @@ const App = () => {
             <BsHeadsetVr size={20} />
             Enter XR
           </Button>
+          
+          {/* Enemy Counter UI */}
+          <div 
+            className="absolute top-20 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-5 py-2.5 rounded-full text-base font-sans pointer-events-none"
+          >
+            Enemies: {enemyCount}/5
+          </div>
         </div>
       </div>
     </AppContextProvider>

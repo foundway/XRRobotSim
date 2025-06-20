@@ -2,9 +2,11 @@ import { useEffect } from 'react'
 import { useThree } from '@react-three/fiber'
 import { OrbitControls, Grid } from '@react-three/drei'
 import { useXR, XROrigin } from '@react-three/xr'
+import { RigidBody } from '@react-three/rapier'
 import { Character } from '@/components/three/Character'
 import { Environment } from '@/components/three/Environment'
 import { Cockpit } from '@/components/three/Cockpit'
+import { EnemySpawner } from '@/components/three/EnemySpawner'
 import { MainMenu } from '@/components/ui/MainMenu'
 import { useSceneStore } from '@/store/SceneStore'
 import ExampleFX from './exampleParticles'
@@ -27,6 +29,7 @@ const Scene = () => {
       <color attach="background" args={['#333333']} />
       <Environment />
       <Character />
+      <EnemySpawner />
       {!session && <OrbitControls target={[0, orbitCenter, -3]} />}
       {showGrid && (
         <Grid

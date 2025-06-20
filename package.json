@@ -18,6 +18,7 @@
     "@react-three/drei": "^10.0.7",
     "@react-three/fiber": "^9.1.2",
     "@react-three/handle": "^6.6.16",
+    "@react-three/rapier": "^2.1.0",
     "@react-three/uikit": "^0.8.15",
     "@react-three/uikit-default": "^0.8.15",
     "@react-three/uikit-lucide": "^0.8.16",
