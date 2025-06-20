@@ -90,14 +90,14 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
     // Make enemy face the character with some smoothing
     if (direction.length() > 0.1) {
       const targetRotation = new Quaternion().setFromUnitVectors(
-        new Vector3(0, 0, -1), // Forward direction
+        new Vector3(0, 0, 1), // Forward direction
         direction
       )
       
       // Smooth rotation
       const currentRotation = rigidBodyRef.current.rotation()
       const currentQuat = new Quaternion(currentRotation.x, currentRotation.y, currentRotation.z, currentRotation.w)
-      currentQuat.slerp(targetRotation, 0.1)
+      currentQuat.slerp(targetRotation, 0.5)
       rigidBodyRef.current.setRotation(currentQuat, true)
     }
   })
@@ -118,9 +118,8 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
       userData={{ isEnemy: true, enemyId: id }}
     >
       <group ref={group} dispose={null} key={id}>
-        <group name="enemy" rotation={[0, Math.PI, 0]}>
-          <axesHelper args={[1]} />
-            <primitive object={clone} scale={1} userData={{ isEnemy: true, enemyId: id }} />
+        <group name="enemy" >
+          <primitive object={clone} scale={1} userData={{ isEnemy: true, enemyId: id }} />
         </group>
       </group>
     </RigidBody>
