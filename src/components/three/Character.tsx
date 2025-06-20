@@ -184,12 +184,12 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
     
     // Update hand rigid body positions to follow hand bones
     if (nodes['handR'] && rightHandRigidBodyRef.current) {
-      const handWorldPos = nodes['handR'].getWorldPosition(new Vector3())
+      const handWorldPos = nodes['palm02R'].getWorldPosition(new Vector3())
       rightHandRigidBodyRef.current.setNextKinematicTranslation(handWorldPos)
     }
     
     if (nodes['handL'] && leftHandRigidBodyRef.current) {
-      const handWorldPos = nodes['handL'].getWorldPosition(new Vector3())
+      const handWorldPos = nodes['palm02L'].getWorldPosition(new Vector3())
       leftHandRigidBodyRef.current.setNextKinematicTranslation(handWorldPos)
     }
   })

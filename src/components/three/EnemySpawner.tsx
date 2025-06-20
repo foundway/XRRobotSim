@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import { useState, useRef, Suspense } from 'react'
 import { Vector3 } from 'three'
 import { useFrame } from '@react-three/fiber'
 import { Enemy } from './Enemy'
@@ -57,32 +57,17 @@ export const EnemySpawner = () => {
     }
   })
 
-  // Optional: Add cleanup for enemies that get too close to character
-  useEffect(() => {
-    const checkEnemyDistances = () => {
-      setEnemies(prev => {
-        const characterPos = new Vector3(0, 0, -3)
-        return prev.filter(enemy => {
-          // This would need to be implemented with actual enemy positions
-          // For now, we'll keep all enemies
-          return true
-        })
-      })
-    }
-    
-    const interval = setInterval(checkEnemyDistances, 1000)
-    return () => clearInterval(interval)
-  }, [])
-
   return (
     <>
-      {enemies.map((enemy) => (
-        <Enemy
-          key={enemy.id}
-          id={enemy.id}
-          initialPosition={enemy.position}
-        />
-      ))}
+      <Suspense fallback={null}>
+        {enemies.map((enemy) => (
+          <Enemy
+            key={enemy.id}
+            id={enemy.id}
+            initialPosition={enemy.position}
+          />
+        ))}
+      </Suspense>
     </>
   )
 } 

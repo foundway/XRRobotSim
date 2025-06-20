@@ -20,11 +20,9 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
   const ENEMY_ORIGIN = initialPosition || new Vector3(0, 4, -5) // Use provided position or default
   const CHARACTER_POSITION = new Vector3(0, 2.5, -3.5) // Character's position
   const MOVE_SPEED = 0.5 // Speed at which enemy moves toward character
-  const lastUpdateTime = useRef(0)
-  // const updateInterval = 0.1 // Update movement every 100ms for more natural movement
   const [isStunned, setIsStunned] = React.useState(false)
   const stunStartTime = useRef(0)
-  const STUN_DURATION = 2 // Stun duration in seconds
+  const STUN_DURATION = 1 // Stun duration in seconds
 
   useEffect(() => { // Find the skinned mesh in the model
     clone.traverse((child) => {
@@ -35,7 +33,6 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
   }, [clone])
   
   useEffect(() => { // Play first animation on load if available
-    console.log('Enemy useEffect - animations:', animations, 'actions:', actions)
     if (animations && animations.length > 0) {
       actions['TV_idle']?.reset().fadeIn(0.5).play()
     } 
@@ -120,14 +117,12 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
       onCollisionEnter={handleCollision}
       userData={{ isEnemy: true, enemyId: id }}
     >
-      <Suspense fallback={null}>
-        <group ref={group} dispose={null} key={id}>
-          <group name="enemy" rotation={[0, Math.PI, 0]}>
-            <axesHelper args={[1]} />
-              <primitive object={clone} scale={1} userData={{ isEnemy: true, enemyId: id }} />
-          </group>
+      <group ref={group} dispose={null} key={id}>
+        <group name="enemy" rotation={[0, Math.PI, 0]}>
+          <axesHelper args={[1]} />
+            <primitive object={clone} scale={1} userData={{ isEnemy: true, enemyId: id }} />
         </group>
-      </Suspense>
+      </group>
     </RigidBody>
   )
 } 
