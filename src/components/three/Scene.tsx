@@ -9,7 +9,7 @@ import { Cockpit } from '@/components/three/Cockpit'
 import { EnemySpawner } from '@/components/three/EnemySpawner'
 import { MainMenu } from '@/components/ui/MainMenu'
 import { useSceneStore } from '@/store/SceneStore'
-import ExampleFX from './exampleParticles'
+import SparksParticles from './SparksParticles'
 
 const Scene = () => {
   const { showGrid, orbitCenter, stageRadius } = useSceneStore()
@@ -30,6 +30,7 @@ const Scene = () => {
       <Environment />
       <Character />
       <EnemySpawner />
+      <SparksParticles />
       {!session && <OrbitControls target={[0, orbitCenter, -3]} />}
       {showGrid && (
         <Grid
@@ -45,7 +46,6 @@ const Scene = () => {
           renderOrder={-1}
         />
       )}
-      <ExampleFX />
       <XROrigin position={[0, 0, 0]} >
         <MainMenu />
         <Cockpit />

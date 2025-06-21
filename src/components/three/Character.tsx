@@ -1,6 +1,6 @@
 import { Group, Mesh, BoxGeometry, MeshBasicMaterial, MeshPhysicalMaterial, Vector3, Quaternion, SkinnedMesh, FrontSide, Object3D} from 'three'
 import { CCDIKSolver, CCDIKHelper } from 'three/addons/animation/CCDIKSolver.js';
-import React, { JSX, useEffect, useRef } from 'react'
+import React, { JSX, useEffect, useRef, useState } from 'react'
 import { useGLTF, useAnimations } from '@react-three/drei'
 import { useModels } from '@/context/AppContext'
 import { useModelStore } from '@/store/ModelStore'
@@ -8,7 +8,13 @@ import { useAnimationStore } from '@/store/AnimationStore'
 import { useSceneStore } from '@/store/SceneStore'
 import { useFrame } from '@react-three/fiber'
 import { useXRInputSourceState, XRSpace } from '@react-three/xr'
-import { RigidBody, BallCollider } from '@react-three/rapier'
+import { useRapier, RigidBody, BallCollider } from '@react-three/rapier'
+import { SparksEmitter } from './SparksEmitter'
+
+interface SparksData {
+  id: string
+  position: Vector3
+}
 
 export const Character = (props: JSX.IntrinsicElements['group']) => {  
   const { currentAnimation, setCurrentAnimation, setAnimations, orientation } = useAnimationStore()
@@ -36,6 +42,8 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
   const skinnedMeshRef = useRef<SkinnedMesh | null>(null)
   const rightHandRigidBodyRef = useRef<any>(null)
   const leftHandRigidBodyRef = useRef<any>(null)
+  const [sparksInstances, setSparksInstances] = useState<SparksData[]>([])
+  const { rapier } = useRapier()
 
   useEffect(() => { // Add placeholder box to head joint
     if (nodes['head']) {
@@ -182,18 +190,29 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
   useFrame(() => { 
     ikUpdate()
     
-    // Update hand rigid body positions to follow hand bones
     if (nodes['handR'] && rightHandRigidBodyRef.current) {
+      console.log('Updating right hand position')
       const handWorldPos = nodes['palm02R'].getWorldPosition(new Vector3())
       rightHandRigidBodyRef.current.setNextKinematicTranslation(handWorldPos)
     }
     
     if (nodes['handL'] && leftHandRigidBodyRef.current) {
+      console.log('Updating left hand position')
       const handWorldPos = nodes['palm02L'].getWorldPosition(new Vector3())
       leftHandRigidBodyRef.current.setNextKinematicTranslation(handWorldPos)
     }
   })
-  
+
+  const handleCollision = (event: any) => {
+    if (event.other.rigidBody.userData.isEnemy) {
+      const newSparks: SparksData = {
+        id: `sparks-${Date.now()}-${Math.random()}`,
+        position: event.rigidBodyObject.position.clone(),
+      }
+      setSparksInstances(prev => [...prev, newSparks])
+    }
+  }
+
   return (
     <>
       <group {...props} ref={CharacterOrigin} position={CHARACTER_ORIGIN} rotation={[0, 0, 0]} dispose={null}>
@@ -206,6 +225,7 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
               restitution={0.9}
               type="kinematicPosition"
               userData={{ isCharacterHand: true, hand: 'right' }}
+              onCollisionEnter={handleCollision}
             >
               <BallCollider args={[0.2]} />
             </RigidBody>
@@ -217,11 +237,18 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
               restitution={0.9}
               type="kinematicPosition"
               userData={{ isCharacterHand: true, hand: 'left' }}
+              onCollisionEnter={handleCollision}
             >
               <BallCollider args={[0.2]} />
             </RigidBody>
         </group>
       </group>
+
+      {sparksInstances.map((sparks) => (
+        <group key={sparks.id} position={sparks.position}>
+          <SparksEmitter />
+        </group>
+      ))}
 
       {rightController?.inputSource?.targetRaySpace && ( // Get controller transform in target ray space. TODO: There might be a better way to do this.
         <XRSpace ref={rightControllerRef} space={rightController.inputSource.targetRaySpace}/>
