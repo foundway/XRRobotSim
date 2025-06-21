@@ -14,6 +14,7 @@ import { SparksEmitter } from './SparksEmitter'
 interface SparksData {
   id: string
   position: Vector3
+  direction: Vector3
 }
 
 export const Character = (props: JSX.IntrinsicElements['group']) => {  
@@ -43,7 +44,7 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
   const rightHandRigidBodyRef = useRef<any>(null)
   const leftHandRigidBodyRef = useRef<any>(null)
   const [sparksInstances, setSparksInstances] = useState<SparksData[]>([])
-  const { rapier } = useRapier()
+  const SPARKS_VELOCITY_SCALE = 0.3
 
   useEffect(() => { // Add placeholder box to head joint
     if (nodes['head']) {
@@ -186,28 +187,30 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
     }
     ikSolverRef.current?.update()
   }
-
-  useFrame(() => { 
-    ikUpdate()
-    
+  
+  const handRBDUpdate = () => {
     if (nodes['handR'] && rightHandRigidBodyRef.current) {
-      console.log('Updating right hand position')
       const handWorldPos = nodes['palm02R'].getWorldPosition(new Vector3())
       rightHandRigidBodyRef.current.setNextKinematicTranslation(handWorldPos)
     }
     
     if (nodes['handL'] && leftHandRigidBodyRef.current) {
-      console.log('Updating left hand position')
       const handWorldPos = nodes['palm02L'].getWorldPosition(new Vector3())
       leftHandRigidBodyRef.current.setNextKinematicTranslation(handWorldPos)
     }
+  } 
+
+  useFrame(() => { 
+    ikUpdate()
+    handRBDUpdate()
   })
 
   const handleCollision = (event: any) => {
     if (event.other.rigidBody.userData.isEnemy) {
       const newSparks: SparksData = {
         id: `sparks-${Date.now()}-${Math.random()}`,
-        position: event.rigidBodyObject.position.clone(),
+        position: new Vector3().copy(event.target.rigidBody.translation()),
+        direction: new Vector3().copy(event.target.rigidBody.linvel())
       }
       setSparksInstances(prev => [...prev, newSparks])
     }
@@ -218,36 +221,33 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
       <group {...props} ref={CharacterOrigin} position={CHARACTER_ORIGIN} rotation={[0, 0, 0]} dispose={null}>
         <group rotation={[0, Math.PI, 0]}>
           <primitive object={scene} scale={scale} userData={{ isCharacter: true }} />
-            <RigidBody 
-              ref={rightHandRigidBodyRef}
-              mass={1}
-              friction={0.7}
-              restitution={0.9}
-              type="kinematicPosition"
-              userData={{ isCharacterHand: true, hand: 'right' }}
-              onCollisionEnter={handleCollision}
-            >
-              <BallCollider args={[0.2]} />
-            </RigidBody>
+          <RigidBody 
+            ref={rightHandRigidBodyRef}
+            mass={1}
+            friction={0.7}
+            restitution={0.9}
+            type="kinematicPosition"
+            userData={{ isCharacterHand: true, hand: 'right' }}
+            onCollisionEnter={handleCollision}
+          >
+            <BallCollider args={[0.2]} />
+          </RigidBody>
 
-            <RigidBody 
-              ref={leftHandRigidBodyRef}
-              mass={1}
-              friction={0.7}
-              restitution={0.9}
-              type="kinematicPosition"
-              userData={{ isCharacterHand: true, hand: 'left' }}
-              onCollisionEnter={handleCollision}
-            >
-              <BallCollider args={[0.2]} />
-            </RigidBody>
+          <RigidBody 
+            ref={leftHandRigidBodyRef}
+            mass={1}
+            friction={0.7}
+            restitution={0.9}
+            type="kinematicPosition"
+            userData={{ isCharacterHand: true, hand: 'left' }}
+            onCollisionEnter={handleCollision}
+          >
+            <BallCollider args={[0.2]} />
+          </RigidBody>
         </group>
       </group>
-
       {sparksInstances.map((sparks) => (
-        <group key={sparks.id} position={sparks.position}>
-          <SparksEmitter />
-        </group>
+        <SparksEmitter key={sparks.id} position={sparks.position} direction={sparks.direction} />
       ))}
 
       {rightController?.inputSource?.targetRaySpace && ( // Get controller transform in target ray space. TODO: There might be a better way to do this.
