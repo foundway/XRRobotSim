@@ -11,7 +11,7 @@ interface EnemyProps {
 }
 
 export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {  
-  const modelUrl = 'trivalve-creature-optimized.glb'
+  const modelUrl = 'alien-drone.glb'
   const { scene, nodes, animations } = useGLTF(modelUrl)
   const clone = React.useMemo(() => SkeletonUtils.clone(scene), [scene])
   const group = React.useRef<Group>(null)
