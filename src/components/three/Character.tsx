@@ -24,26 +24,24 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
   const { cockpitRef } = useSceneStore()
   const rightController = useXRInputSourceState('controller', 'right')
   const leftController = useXRInputSourceState('controller', 'left')
-  const modelUrl = currentModel.url
-  const { scene, nodes, animations } = useGLTF(modelUrl)
-  const group = React.useRef<Group>(null)
+  const { scene, nodes, animations } = useGLTF(currentModel.url)
   const parentRef = React.useRef<Object3D>(null)
   const rightControllerRef = React.useRef<Object3D | null>(null)
   const leftControllerRef = React.useRef<Object3D | null>(null)
   const chestRef = React.useRef<Object3D | null>(null)
-  const { actions } = useAnimations(animations, group)
-  const CharacterOrigin = useRef<Object3D>(null)
-  const UNSET_ROUGHNESS = 1
-  const UNSET_THICKNESS = 0
-  const FALLBACK_ROUGHNESS = 0.1 
-  const FALLBACK_THICKNESS = 1
-  const CHARACTER_ORIGIN = new Vector3(0, 0, -3)
+  const characterRef = useRef<Object3D>(null)
+  const { actions } = useAnimations(animations, characterRef)
   const ikSolverRef = useRef<CCDIKSolver | null>(null)
   const ikHelperRef = useRef<CCDIKHelper | null>(null)
   const skinnedMeshRef = useRef<SkinnedMesh | null>(null)
   const rightHandRigidBodyRef = useRef<any>(null)
   const leftHandRigidBodyRef = useRef<any>(null)
   const [sparksInstances, setSparksInstances] = useState<SparksData[]>([])
+  const UNSET_ROUGHNESS = 1
+  const UNSET_THICKNESS = 0
+  const FALLBACK_ROUGHNESS = 0.1 
+  const FALLBACK_THICKNESS = 1
+  const CHARACTER_ORIGIN = new Vector3(0, 0, -3)
   const SPARKS_VELOCITY_SCALE = 0.3
 
   useEffect(() => { // Add placeholder box to head joint
@@ -140,19 +138,18 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
     }
   }, [orientation, nodes['waist']])
   
-  useEffect(() => { // Set animation list and play first animation on load
-    setAnimations(animations)
-    if (animations && animations.length > 0) {
-      setCurrentAnimation(animations[0].name)
-    } 
-  }, [animations, setAnimations, setCurrentAnimation])
-  
-  useEffect(() => { // Change animation
-    actions[currentAnimation]?.reset().fadeIn(0.5).play()
-    return () => {
-      actions[currentAnimation]?.fadeOut(0.5)
+  useEffect(() => { // Play Idle animation on load
+    if (actions.Idle) {
+      actions.Idle.play()
     }
-  }, [currentAnimation])
+  }, [actions])
+  
+  // useEffect(() => { // Change animation
+  //   actions[currentAnimation]?.reset().fadeIn(0.5).play()
+  //   return () => {
+  //     actions[currentAnimation]?.fadeOut(0.5)
+  //   }
+  // }, [currentAnimation])
 
   const ikUpdate = () => {
     if (!cockpitRef.current) return
@@ -218,7 +215,7 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
 
   return (
     <>
-      <group {...props} ref={CharacterOrigin} position={CHARACTER_ORIGIN} rotation={[0, 0, 0]} dispose={null}>
+      <group {...props} ref={characterRef} position={CHARACTER_ORIGIN} rotation={[0, 0, 0]} dispose={null}>
         <group rotation={[0, Math.PI, 0]}>
           <primitive object={scene} scale={scale} userData={{ isCharacter: true }} />
           <RigidBody 
@@ -287,3 +284,5 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
     </>
   )
 }
+
+useGLTF.preload('/kanonenkopf-kampfpanzer-rigged.glb')
