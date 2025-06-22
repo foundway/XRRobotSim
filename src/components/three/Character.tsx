@@ -32,6 +32,7 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
   const chestRef = React.useRef<Object3D | null>(null)
   const characterRef = useRef<Object3D>(null)
   const { actions } = useAnimations(animations, characterRef)
+  const [currentAction, setCurrentAction] = useState(actions.Idle)
   const ikSolverRef = useRef<CCDIKSolver | null>(null)
   const ikHelperRef = useRef<CCDIKHelper | null>(null)
   const skinnedMeshRef = useRef<SkinnedMesh | null>(null)
@@ -44,6 +45,7 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
   const FALLBACK_ROUGHNESS = 0.1 
   const FALLBACK_THICKNESS = 1
   const DEADZONE = 0.1
+  const LOCOMOTION_TRANSITION_SECONDS = 0.0
 
   useEffect(() => { // Add placeholder box to head joint
     if (nodes['head']) {
@@ -139,36 +141,46 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
     }
   }, [orientation, nodes['waist']])
   
-  useEffect(() => { // Play Idle animation on load
+  useEffect(() => {
     actions.Idle?.play()
+    setCurrentAction(actions.Idle)
     return () => {
-      actions.Idle?.fadeOut(0.1)
+      currentAction?.fadeOut(0.1)
     }
   }, [actions])
 
   const locomotionUpdate = () => {
+    if (!currentAction) {
+      return
+    }
     const thumbstickState = rightController?.gamepad['xr-standard-thumbstick']
     const y = thumbstickState?.yAxis || 0
-    const isMoving = y < -DEADZONE
-    const idleAction = actions.Idle
-    const walkAction = actions.WalkMid
 
-    if (walkAction) {
-      if (lastCycleTime > walkAction.time) {
-        if (characterRef.current) {
-          characterRef.current.position.copy(lastRootPosition)
-        }
+    if (lastCycleTime > currentAction.time) {
+      console.log('cycle reset')
+      if (characterRef.current) {
+        characterRef.current.position.copy(lastRootPosition)
       }
-      setLastCycleTime(walkAction?.time)
-      setLastRootPosition(nodes.root.getWorldPosition(new Vector3))
     }
+    setLastCycleTime(currentAction?.time)
+    setLastRootPosition(nodes.root.getWorldPosition(new Vector3))
 
-    if (isMoving && !walkAction?.isRunning()) {
-      idleAction?.fadeOut(0)
-      walkAction?.reset().fadeIn(0).play()
-    } else if (!isMoving && !idleAction?.isRunning()) {
-      walkAction?.fadeOut(0)
-      idleAction?.reset().fadeIn(0).play()
+    if (y < -DEADZONE && !actions.Forward?.isRunning()) {
+      console.log('Forward')
+      currentAction?.fadeOut(LOCOMOTION_TRANSITION_SECONDS)
+      actions.Forward?.reset().fadeIn(LOCOMOTION_TRANSITION_SECONDS).play()
+      setCurrentAction(actions.Forward)
+    } 
+    else if (y > DEADZONE && !actions.Backward?.isRunning()) {
+      console.log('Backward')
+      currentAction?.fadeOut(LOCOMOTION_TRANSITION_SECONDS)
+      actions.Backward?.reset().fadeIn(LOCOMOTION_TRANSITION_SECONDS).play()
+      setCurrentAction(actions.Backward)
+    } 
+    else if (Math.abs(y)<DEADZONE && !actions.Idle?.isRunning() && lastCycleTime > currentAction.time) {
+      currentAction?.fadeOut(LOCOMOTION_TRANSITION_SECONDS)
+      actions.Idle?.reset().fadeIn(LOCOMOTION_TRANSITION_SECONDS).play()
+      setCurrentAction(actions.Idle)
     }
   }
 
