@@ -1,4 +1,4 @@
-import { Group, Mesh, BoxGeometry, MeshBasicMaterial, MeshPhysicalMaterial, Vector3, Quaternion, SkinnedMesh, FrontSide, Object3D} from 'three'
+import { Mesh, BoxGeometry, MeshBasicMaterial, MeshPhysicalMaterial, Vector3, Quaternion, SkinnedMesh, FrontSide, Object3D} from 'three'
 import { CCDIKSolver, CCDIKHelper } from 'three/addons/animation/CCDIKSolver.js';
 import React, { JSX, useEffect, useRef, useState } from 'react'
 import { useGLTF, useAnimations } from '@react-three/drei'
@@ -8,7 +8,7 @@ import { useAnimationStore } from '@/store/AnimationStore'
 import { useSceneStore } from '@/store/SceneStore'
 import { useFrame } from '@react-three/fiber'
 import { useXRInputSourceState, XRSpace } from '@react-three/xr'
-import { useRapier, RigidBody, BallCollider } from '@react-three/rapier'
+import { RigidBody, BallCollider } from '@react-three/rapier'
 import { SparksEmitter } from './SparksEmitter'
 
 interface SparksData {
@@ -18,7 +18,7 @@ interface SparksData {
 }
 
 export const Character = (props: JSX.IntrinsicElements['group']) => {  
-  const { currentAnimation, setCurrentAnimation, setAnimations, orientation } = useAnimationStore()
+  const { orientation } = useAnimationStore()
   const { scale } = useModelStore()
   const { currentModel } = useModels()
   const { cockpitRef } = useSceneStore()
