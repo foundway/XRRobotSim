@@ -1,9 +1,10 @@
 import { Group, Vector3, Quaternion, SkinnedMesh } from 'three'
-import React, { Suspense, useEffect, useRef } from 'react'
-import { useGLTF, useAnimations } from '@react-three/drei'
+import React, { useEffect, useRef } from 'react'
+import { useGLTF } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import { RigidBody } from '@react-three/rapier'
 import { SkeletonUtils } from 'three-stdlib'
+import { useAnimationStore } from '@/store/AnimationStore'
 
 interface EnemyProps {
   initialPosition?: Vector3
@@ -12,17 +13,17 @@ interface EnemyProps {
 
 export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {  
   const modelUrl = 'alien-drone.glb'
-  const { scene, nodes, animations } = useGLTF(modelUrl)
+  const { scene } = useGLTF(modelUrl)
   const clone = React.useMemo(() => SkeletonUtils.clone(scene), [scene])
   const group = React.useRef<Group>(null)
-  const { actions } = useAnimations(animations, group)
   const rigidBodyRef = useRef<any>(null)
   const ENEMY_ORIGIN = initialPosition || new Vector3(0, 4, -5) // Use provided position or default
-  const CHARACTER_POSITION = new Vector3(0, 2.5, -3.5) // Character's position
+  const { characterPosition } = useAnimationStore()
   const MOVE_SPEED = 0.5 // Speed at which enemy moves toward character
   const [isStunned, setIsStunned] = React.useState(false)
   const stunStartTime = useRef(0)
   const STUN_DURATION = 1 // Stun duration in seconds
+  const CHARACTER_HEIGHT = new Vector3(0, 2, 0)
 
   useEffect(() => { // Find the skinned mesh in the model
     clone.traverse((child) => {
@@ -32,13 +33,6 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
     })
   }, [clone])
   
-  useEffect(() => { // Play first animation on load if available
-    if (animations && animations.length > 0) {
-      actions['TV_idle']?.reset().fadeIn(0.5).play()
-    } 
-  }, [animations, actions])
-
-  // Handle collision with character hands
   const handleCollision = (event: any) => {
     if (event.other.rigidBodyObject) {
         const userData = event.other.rigidBodyObject.userData
@@ -75,13 +69,9 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
 
     if (isStunned) return
 
-    // // Update movement at intervals for more natural behavior
-    // if (state.clock.elapsedTime - lastUpdateTime.current < updateInterval) return
-    // lastUpdateTime.current = state.clock.elapsedTime
-
     const enemyPosition = rigidBodyRef.current.translation()
     const enemyPos = new Vector3(enemyPosition.x, enemyPosition.y, enemyPosition.z)
-    const direction = CHARACTER_POSITION.clone().sub(enemyPos).normalize()
+    const direction = characterPosition.clone().add(CHARACTER_HEIGHT).sub(enemyPos).normalize()
     
     rigidBodyRef.current.setLinvel(direction.multiplyScalar(MOVE_SPEED), true)
 

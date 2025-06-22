@@ -20,7 +20,7 @@ interface SparksData {
 export const Character = (props: JSX.IntrinsicElements['group']) => {  
   const [lastCycleTime, setLastCycleTime] = useState(0)
   const [sparksInstances, setSparksInstances] = useState<SparksData[]>([])
-  const { orientation, characterPosition } = useAnimationStore()
+  const { orientation, characterPosition, setCharacterPosition} = useAnimationStore()
   const [lastRootPosition, setLastRootPosition] = useState(characterPosition)
   const rightController = useXRInputSourceState('controller', 'right')
   const leftController = useXRInputSourceState('controller', 'left')
@@ -160,6 +160,7 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
       console.log('cycle reset')
       if (characterRef.current) {
         characterRef.current.position.copy(lastRootPosition)
+        setCharacterPosition(lastRootPosition)
       }
     }
     setLastCycleTime(currentAction?.time)
