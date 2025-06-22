@@ -18,12 +18,13 @@ interface SparksData {
 }
 
 export const Character = (props: JSX.IntrinsicElements['group']) => {  
-  const { orientation } = useAnimationStore()
-  const { scale } = useModelStore()
-  const { currentModel } = useModels()
-  const { cockpitRef } = useSceneStore()
+  const [lastCycleTime, setLastCycleTime] = useState(0)
+  const [sparksInstances, setSparksInstances] = useState<SparksData[]>([])
+  const { orientation, characterPosition } = useAnimationStore()
+  const [lastRootPosition, setLastRootPosition] = useState(characterPosition)
   const rightController = useXRInputSourceState('controller', 'right')
   const leftController = useXRInputSourceState('controller', 'left')
+  const { currentModel } = useModels()
   const { scene, nodes, animations } = useGLTF(currentModel.url)
   const parentRef = React.useRef<Object3D>(null)
   const rightControllerRef = React.useRef<Object3D | null>(null)
@@ -36,12 +37,12 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
   const skinnedMeshRef = useRef<SkinnedMesh | null>(null)
   const rightHandRigidBodyRef = useRef<any>(null)
   const leftHandRigidBodyRef = useRef<any>(null)
-  const [sparksInstances, setSparksInstances] = useState<SparksData[]>([])
+  const { scale } = useModelStore()
+  const { cockpitRef } = useSceneStore()
   const UNSET_ROUGHNESS = 1
   const UNSET_THICKNESS = 0
   const FALLBACK_ROUGHNESS = 0.1 
   const FALLBACK_THICKNESS = 1
-  const CHARACTER_ORIGIN = new Vector3(0, 0, -3)
   const DEADZONE = 0.1
 
   useEffect(() => { // Add placeholder box to head joint
@@ -152,6 +153,16 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
     const idleAction = actions.Idle
     const walkAction = actions.WalkMid
 
+    if (walkAction) {
+      if (lastCycleTime > walkAction.time) {
+        if (characterRef.current) {
+          characterRef.current.position.copy(lastRootPosition)
+        }
+      }
+      setLastCycleTime(walkAction?.time)
+      setLastRootPosition(nodes.root.getWorldPosition(new Vector3))
+    }
+
     if (isMoving && !walkAction?.isRunning()) {
       idleAction?.fadeOut(0)
       walkAction?.reset().fadeIn(0).play()
@@ -226,33 +237,31 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
 
   return (
     <>
-      <group {...props} ref={characterRef} position={CHARACTER_ORIGIN} rotation={[0, 0, 0]} dispose={null}>
-        <group rotation={[0, Math.PI, 0]}>
-          <primitive object={scene} scale={scale} userData={{ isCharacter: true }} />
-          <RigidBody 
-            ref={rightHandRigidBodyRef}
-            mass={1}
-            friction={0.7}
-            restitution={0.9}
-            type="kinematicPosition"
-            userData={{ isCharacterHand: true, hand: 'right' }}
-            onCollisionEnter={handleCollision}
-          >
-            <BallCollider args={[0.2]} />
-          </RigidBody>
+      <group {...props} ref={characterRef} position={characterPosition} rotation={[0, Math.PI, 0]}>
+        <primitive object={scene} scale={scale} userData={{ isCharacter: true }} />
+        <RigidBody 
+          ref={rightHandRigidBodyRef}
+          mass={1}
+          friction={0.7}
+          restitution={0.9}
+          type="kinematicPosition"
+          userData={{ isCharacterHand: true, hand: 'right' }}
+          onCollisionEnter={handleCollision}
+        >
+          <BallCollider args={[0.2]} />
+        </RigidBody>
 
-          <RigidBody 
-            ref={leftHandRigidBodyRef}
-            mass={1}
-            friction={0.7}
-            restitution={0.9}
-            type="kinematicPosition"
-            userData={{ isCharacterHand: true, hand: 'left' }}
-            onCollisionEnter={handleCollision}
-          >
-            <BallCollider args={[0.2]} />
-          </RigidBody>
-        </group>
+        <RigidBody 
+          ref={leftHandRigidBodyRef}
+          mass={1}
+          friction={0.7}
+          restitution={0.9}
+          type="kinematicPosition"
+          userData={{ isCharacterHand: true, hand: 'left' }}
+          onCollisionEnter={handleCollision}
+        >
+          <BallCollider args={[0.2]} />
+        </RigidBody>
       </group>
       {sparksInstances.map((sparks) => (
         <SparksEmitter key={sparks.id} position={sparks.position} direction={sparks.direction} />
