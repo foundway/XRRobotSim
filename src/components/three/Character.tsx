@@ -42,7 +42,7 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
   const FALLBACK_ROUGHNESS = 0.1 
   const FALLBACK_THICKNESS = 1
   const CHARACTER_ORIGIN = new Vector3(0, 0, -3)
-  const SPARKS_VELOCITY_SCALE = 0.3
+  const DEADZONE = 0.1
 
   useEffect(() => { // Add placeholder box to head joint
     if (nodes['head']) {
@@ -139,17 +139,27 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
   }, [orientation, nodes['waist']])
   
   useEffect(() => { // Play Idle animation on load
-    if (actions.Idle) {
-      actions.Idle.play()
+    actions.Idle?.play()
+    return () => {
+      actions.Idle?.fadeOut(0.1)
     }
   }, [actions])
-  
-  // useEffect(() => { // Change animation
-  //   actions[currentAnimation]?.reset().fadeIn(0.5).play()
-  //   return () => {
-  //     actions[currentAnimation]?.fadeOut(0.5)
-  //   }
-  // }, [currentAnimation])
+
+  const locomotionUpdate = () => {
+    const thumbstickState = rightController?.gamepad['xr-standard-thumbstick']
+    const y = thumbstickState?.yAxis || 0
+    const isMoving = y < -DEADZONE
+    const idleAction = actions.Idle
+    const walkAction = actions.WalkMid
+
+    if (isMoving && !walkAction?.isRunning()) {
+      idleAction?.fadeOut(0)
+      walkAction?.reset().fadeIn(0).play()
+    } else if (!isMoving && !idleAction?.isRunning()) {
+      walkAction?.fadeOut(0)
+      idleAction?.reset().fadeIn(0).play()
+    }
+  }
 
   const ikUpdate = () => {
     if (!cockpitRef.current) return
@@ -198,8 +208,9 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
   } 
 
   useFrame(() => { 
-    ikUpdate()
+    locomotionUpdate()
     handRBDUpdate()
+    ikUpdate()
   })
 
   const handleCollision = (event: any) => {

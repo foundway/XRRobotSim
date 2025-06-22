@@ -43,7 +43,6 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
     if (event.other.rigidBodyObject) {
         const userData = event.other.rigidBodyObject.userData
         if (userData?.isCharacterHand && !isStunned) {
-            console.log(`Enemy ${id} hit by ${userData.hand} hand!`)
             setIsStunned(true)
             stunStartTime.current = Date.now()
             
@@ -61,7 +60,6 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
       const checkStunEnd = () => {
         if (Date.now() - stunStartTime.current >= STUN_DURATION * 1000) {
           setIsStunned(false)
-          console.log(`Enemy ${id} stun ended`)
         }
       }
       
