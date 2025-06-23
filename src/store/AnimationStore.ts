@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { Vector3 } from 'three'
+import { Vector3, Quaternion } from 'three'
 
 interface AnimationState {
   currentAnimation: string
@@ -11,6 +11,8 @@ interface AnimationState {
   addOrientation: (delta: number) => void
   characterPosition: Vector3
   setCharacterPosition: (position: Vector3) => void
+  characterOrientation: number
+  setCharacterOrientation: (orientationRadian: number) => void
 }
 
 export const useAnimationStore = create<AnimationState>((set) => ({
@@ -23,4 +25,6 @@ export const useAnimationStore = create<AnimationState>((set) => ({
   addOrientation: (delta) => set((state) => ({ orientation: state.orientation + delta })),
   characterPosition: new Vector3(0, 0, -3),
   setCharacterPosition: (position) => set({ characterPosition: position }),
+  characterOrientation: Math.PI,
+  setCharacterOrientation: (orientationRadian) => set({ characterOrientation: orientationRadian})
 })) 

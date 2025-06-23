@@ -2,7 +2,6 @@ import { useEffect } from 'react'
 import { useThree } from '@react-three/fiber'
 import { OrbitControls, Grid } from '@react-three/drei'
 import { useXR, XROrigin } from '@react-three/xr'
-import { RigidBody } from '@react-three/rapier'
 import { Character } from '@/components/three/Character'
 import { Environment } from '@/components/three/Environment'
 import { Cockpit } from '@/components/three/Cockpit'
@@ -50,6 +49,7 @@ const Scene = () => {
         <MainMenu />
         <Cockpit />
       </XROrigin>
+      <axesHelper/>
     </>
   )
 }

@@ -1,6 +1,6 @@
-import { Mesh, BoxGeometry, MeshBasicMaterial, MeshPhysicalMaterial, Vector3, Quaternion, SkinnedMesh, FrontSide, Object3D} from 'three'
+import { Mesh, BoxGeometry, MeshBasicMaterial, MeshPhysicalMaterial, Vector3, Quaternion, SkinnedMesh, FrontSide, Object3D, Euler} from 'three'
 import { CCDIKSolver, CCDIKHelper } from 'three/addons/animation/CCDIKSolver.js';
-import React, { JSX, useEffect, useRef, useState } from 'react'
+import { JSX, useEffect, useRef, useState, useMemo } from 'react'
 import { useGLTF, useAnimations } from '@react-three/drei'
 import { useModels } from '@/context/AppContext'
 import { useModelStore } from '@/store/ModelStore'
@@ -11,6 +11,22 @@ import { useXRInputSourceState, XRSpace } from '@react-three/xr'
 import { RigidBody, BallCollider } from '@react-three/rapier'
 import { SparksEmitter } from './SparksEmitter'
 
+const UNSET_ROUGHNESS = 1
+const UNSET_THICKNESS = 0
+const FALLBACK_ROUGHNESS = 0.1 
+const FALLBACK_THICKNESS = 1
+const DEADZONE = 0.1
+const LOCOMOTION_TRANSITION_SECONDS = 0.0
+const VECTOR_UP = new Vector3(0, 1, 0)
+
+enum LocomotionCommand {
+  Idle = 'Idle',
+  Forward = 'Forward', 
+  Backward = 'Backward',
+  TurnRight = 'TurnRight',
+  TurnLeft = 'TurnLeft'
+}
+
 interface SparksData {
   id: string
   position: Vector3
@@ -18,20 +34,37 @@ interface SparksData {
 }
 
 export const Character = (props: JSX.IntrinsicElements['group']) => {  
-  const [lastCycleTime, setLastCycleTime] = useState(0)
+  const lastCycleTime = useRef(0)
   const [sparksInstances, setSparksInstances] = useState<SparksData[]>([])
-  const { orientation, characterPosition, setCharacterPosition} = useAnimationStore()
-  const [lastRootPosition, setLastRootPosition] = useState(characterPosition)
+  const { orientation, characterPosition, setCharacterPosition, characterOrientation, setCharacterOrientation} = useAnimationStore()
+
   const rightController = useXRInputSourceState('controller', 'right')
   const leftController = useXRInputSourceState('controller', 'left')
   const { currentModel } = useModels()
   const { scene, nodes, animations } = useGLTF(currentModel.url)
-  const parentRef = React.useRef<Object3D>(null)
-  const rightControllerRef = React.useRef<Object3D | null>(null)
-  const leftControllerRef = React.useRef<Object3D | null>(null)
-  const chestRef = React.useRef<Object3D | null>(null)
+  const parentRef = useRef<Object3D>(null)
+  const rightControllerRef = useRef<Object3D | null>(null)
+  const leftControllerRef = useRef<Object3D | null>(null)
+  const chestRef = useRef<Object3D | null>(null)
   const characterRef = useRef<Object3D>(null)
-  const { actions } = useAnimations(animations, characterRef)
+
+  const ikBoneNames = useMemo(() => [
+    'shoulderR', 'upper_armR', 'forearmR', 'handR',
+    'shoulderL', 'upper_armL', 'forearmL', 'handL'
+  ], []);
+
+  const animationsWithIKBones = useMemo(() => {
+    return animations.map(clip => {
+      const newClip = clip.clone();
+      newClip.tracks = clip.tracks.filter(track => {
+        const boneName = track.name.split('.')[0];
+        return !ikBoneNames.includes(boneName);
+      });
+      return newClip;
+    });
+  }, [animations, ikBoneNames]);
+
+  const { actions } = useAnimations(animationsWithIKBones, characterRef)
   const [currentAction, setCurrentAction] = useState(actions.Idle)
   const ikSolverRef = useRef<CCDIKSolver | null>(null)
   const ikHelperRef = useRef<CCDIKHelper | null>(null)
@@ -40,12 +73,6 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
   const leftHandRigidBodyRef = useRef<any>(null)
   const { scale } = useModelStore()
   const { cockpitRef } = useSceneStore()
-  const UNSET_ROUGHNESS = 1
-  const UNSET_THICKNESS = 0
-  const FALLBACK_ROUGHNESS = 0.1 
-  const FALLBACK_THICKNESS = 1
-  const DEADZONE = 0.1
-  const LOCOMOTION_TRANSITION_SECONDS = 0.0
 
   useEffect(() => { // Add placeholder box to head joint
     if (nodes['head']) {
@@ -64,6 +91,7 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
         skinnedMeshRef.current = child
       }
     })
+    console.log(actions)
   }, [scene])
 
   useEffect(() => { // Set up IK solver
@@ -134,55 +162,71 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
     })
   }, [scene])
   
-  useEffect(() => { // Rotate waist to match orientation
-    if (nodes['waist'] != null) {
-      const newQuaternion = (new Quaternion()).setFromAxisAngle(new Vector3(0, 1, 0), orientation)
-      nodes['waist'].quaternion.copy(newQuaternion)
-    }
-  }, [orientation, nodes['waist']])
-  
   useEffect(() => {
     actions.Idle?.play()
     setCurrentAction(actions.Idle)
     return () => {
-      currentAction?.fadeOut(0.1)
+      currentAction?.fadeOut(LOCOMOTION_TRANSITION_SECONDS)
     }
   }, [actions])
 
+  const lastRootPosition = useRef(nodes.root.position.clone())
+  const lastRootOrientation = useRef(characterOrientation)
   const locomotionUpdate = () => {
     if (!currentAction) {
       return
     }
-    const thumbstickState = rightController?.gamepad['xr-standard-thumbstick']
-    const y = thumbstickState?.yAxis || 0
+    const rightStick = rightController?.gamepad['xr-standard-thumbstick']
+    const y = rightStick?.yAxis || 0
+    const x = rightStick?.xAxis || 0
+    let command
 
-    if (lastCycleTime > currentAction.time) {
-      console.log('cycle reset')
-      if (characterRef.current) {
-        characterRef.current.position.copy(lastRootPosition)
-        setCharacterPosition(lastRootPosition)
-      }
+    if (y < -DEADZONE) {
+      command = LocomotionCommand.Forward
+    } else if (y > DEADZONE) {
+      command = LocomotionCommand.Backward
+    } else if (x > DEADZONE) {
+      command = LocomotionCommand.TurnRight
+    } else if (x < -DEADZONE) {
+      command = LocomotionCommand.TurnLeft
+    } else {
+      command = LocomotionCommand.Idle
     }
-    setLastCycleTime(currentAction?.time)
-    setLastRootPosition(nodes.root.getWorldPosition(new Vector3))
 
-    if (y < -DEADZONE && !actions.Forward?.isRunning()) {
-      console.log('Forward')
+    if (lastCycleTime.current > currentAction.time) {
+      if (characterRef.current) {
+        characterRef.current.position.add(lastRootPosition.current.applyQuaternion(characterRef.current.quaternion))
+        characterRef.current.rotateOnAxis(VECTOR_UP, lastRootOrientation.current)
+      } 
+    }
+    if (command == LocomotionCommand.Forward && !actions.Forward?.isRunning()) {
       currentAction?.fadeOut(LOCOMOTION_TRANSITION_SECONDS)
       actions.Forward?.reset().fadeIn(LOCOMOTION_TRANSITION_SECONDS).play()
       setCurrentAction(actions.Forward)
     } 
-    else if (y > DEADZONE && !actions.Backward?.isRunning()) {
-      console.log('Backward')
+    else if (command == LocomotionCommand.Backward && !actions.Backward?.isRunning()) {
       currentAction?.fadeOut(LOCOMOTION_TRANSITION_SECONDS)
       actions.Backward?.reset().fadeIn(LOCOMOTION_TRANSITION_SECONDS).play()
       setCurrentAction(actions.Backward)
     } 
-    else if (Math.abs(y)<DEADZONE && !actions.Idle?.isRunning() && lastCycleTime > currentAction.time) {
+    else if (command == LocomotionCommand.TurnRight && !actions.TurnRight?.isRunning()) {
+      currentAction?.fadeOut(LOCOMOTION_TRANSITION_SECONDS)
+      actions.TurnRight?.reset().fadeIn(LOCOMOTION_TRANSITION_SECONDS).play()
+      setCurrentAction(actions.TurnRight)
+    } 
+    else if (command == LocomotionCommand.TurnLeft && !actions.TurnLeft?.isRunning()) {
+      currentAction?.fadeOut(LOCOMOTION_TRANSITION_SECONDS)
+      actions.TurnLeft?.reset().fadeIn(LOCOMOTION_TRANSITION_SECONDS).play()
+      setCurrentAction(actions.TurnLeft)
+    }
+    else if (command == LocomotionCommand.Idle && !actions.Idle?.isRunning() && lastCycleTime.current > currentAction.time) {
       currentAction?.fadeOut(LOCOMOTION_TRANSITION_SECONDS)
       actions.Idle?.reset().fadeIn(LOCOMOTION_TRANSITION_SECONDS).play()
       setCurrentAction(actions.Idle)
     }
+    lastRootPosition.current = nodes.root.position.clone()
+    lastRootOrientation.current = nodes.root.rotation.z
+    lastCycleTime.current = currentAction.time
   }
 
   const ikUpdate = () => {
@@ -220,21 +264,25 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
   }
   
   const handRBDUpdate = () => {
-    if (nodes['handR'] && rightHandRigidBodyRef.current) {
-      const handWorldPos = nodes['palm02R'].getWorldPosition(new Vector3())
+    if (nodes.handR && rightHandRigidBodyRef.current) {
+      const handWorldPos = nodes.palm02R.getWorldPosition(new Vector3())
+      const handWorldQuat = nodes.palm02R.getWorldQuaternion(new Quaternion())
       rightHandRigidBodyRef.current.setNextKinematicTranslation(handWorldPos)
+      rightHandRigidBodyRef.current.setNextKinematicRotation(handWorldQuat)
     }
     
-    if (nodes['handL'] && leftHandRigidBodyRef.current) {
-      const handWorldPos = nodes['palm02L'].getWorldPosition(new Vector3())
+    if (nodes.handL && leftHandRigidBodyRef.current) {
+      const handWorldPos = nodes.palm02L.getWorldPosition(new Vector3())
+      const handWorldQuat = nodes.palm02L.getWorldQuaternion(new Quaternion())
       leftHandRigidBodyRef.current.setNextKinematicTranslation(handWorldPos)
+      leftHandRigidBodyRef.current.setNextKinematicRotation(handWorldQuat)
     }
   } 
 
   useFrame(() => { 
     locomotionUpdate()
-    handRBDUpdate()
     ikUpdate()
+    handRBDUpdate()
   })
 
   const handleCollision = (event: any) => {
@@ -250,32 +298,31 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
 
   return (
     <>
-      <group {...props} ref={characterRef} position={characterPosition} rotation={[0, Math.PI, 0]}>
+      <group {...props} ref={characterRef} position={characterPosition} rotation={[0, characterOrientation, 0]}>
         <primitive object={scene} scale={scale} userData={{ isCharacter: true }} />
-        <RigidBody 
-          ref={rightHandRigidBodyRef}
-          mass={1}
-          friction={0.7}
-          restitution={0.9}
-          type="kinematicPosition"
-          userData={{ isCharacterHand: true, hand: 'right' }}
-          onCollisionEnter={handleCollision}
-        >
-          <BallCollider args={[0.2]} />
-        </RigidBody>
-
-        <RigidBody 
-          ref={leftHandRigidBodyRef}
-          mass={1}
-          friction={0.7}
-          restitution={0.9}
-          type="kinematicPosition"
-          userData={{ isCharacterHand: true, hand: 'left' }}
-          onCollisionEnter={handleCollision}
-        >
-          <BallCollider args={[0.2]} />
-        </RigidBody>
       </group>
+      <RigidBody 
+        ref={rightHandRigidBodyRef}
+        mass={1}
+        friction={0.7}
+        restitution={0.9}
+        type="kinematicPosition"
+        userData={{ isCharacterHand: true, hand: 'right' }}
+        onCollisionEnter={handleCollision}
+      >
+        <BallCollider args={[0.2]} />
+      </RigidBody>
+      <RigidBody 
+        ref={leftHandRigidBodyRef}
+        mass={1}
+        friction={0.7}
+        restitution={0.9}
+        type="kinematicPosition"
+        userData={{ isCharacterHand: true, hand: 'left' }}
+        onCollisionEnter={handleCollision}
+      >
+        <BallCollider args={[0.2]} />
+      </RigidBody>
       {sparksInstances.map((sparks) => (
         <SparksEmitter key={sparks.id} position={sparks.position} direction={sparks.direction} />
       ))}
