@@ -36,7 +36,7 @@ interface SparksData {
 export const Character = (props: JSX.IntrinsicElements['group']) => {  
   const lastCycleTime = useRef(0)
   const [sparksInstances, setSparksInstances] = useState<SparksData[]>([])
-  const { orientation, characterPosition, setCharacterPosition, characterOrientation, setCharacterOrientation} = useAnimationStore()
+  const { characterPosition, characterOrientation, } = useAnimationStore()
 
   const rightController = useXRInputSourceState('controller', 'right')
   const leftController = useXRInputSourceState('controller', 'left')
@@ -75,15 +75,15 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
   const { cockpitRef } = useSceneStore()
 
   useEffect(() => { // Add placeholder box to head joint
-    if (nodes['head']) {
+    if (nodes.head) {
       const box = new Mesh(
         new BoxGeometry(0.2, 0.4, 0.2),
         new MeshBasicMaterial({ color: 'blue', wireframe: true })
       )
       box.position.set(0, 0.2, 0) // Position slightly above the head
-      nodes['head'].add(box)
+      nodes.head.add(box)
     }
-  }, [nodes['head']])
+  }, [nodes.head])
 
   useEffect(() => { // Find the skinned mesh in the model
     scene.traverse((child) => {
@@ -233,8 +233,8 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
     if (!cockpitRef.current) return
 
     if (chestRef.current) {
-      chestRef.current.position.copy(nodes['chest'].getWorldPosition(new Vector3()))
-      chestRef.current.quaternion.copy(nodes['chest'].getWorldQuaternion(new Quaternion()))
+      chestRef.current.position.copy(nodes.chest.getWorldPosition(new Vector3()))
+      chestRef.current.quaternion.copy(nodes.chest.getWorldQuaternion(new Quaternion()))
     }
 
     if (rightControllerRef.current) {
@@ -245,8 +245,8 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
       const localPos = controllerWorldPos.clone().applyMatrix4(cockpitWorldMatrix)
       const localQuat = controllerWorldQuat.clone().premultiply(cockpitRef.current.getWorldQuaternion(new Quaternion()).invert())
       
-      nodes['ikhandR'].position.copy(localPos.multiplyScalar(2))
-      nodes['ikhandR'].quaternion.copy(localQuat)
+      nodes.ikhandR.position.copy(localPos.multiplyScalar(2))
+      nodes.ikhandR.quaternion.copy(localQuat)
     }
 
     if (leftControllerRef.current) {
@@ -257,8 +257,8 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
       const localPos = controllerWorldPos.clone().applyMatrix4(cockpitWorldMatrix)
       const localQuat = controllerWorldQuat.clone().premultiply(cockpitRef.current.getWorldQuaternion(new Quaternion()).invert())
       
-      nodes['ikhandL'].position.copy(localPos.multiplyScalar(2))
-      nodes['ikhandL'].quaternion.copy(localQuat)
+      nodes.ikhandL.position.copy(localPos.multiplyScalar(2))
+      nodes.ikhandL.quaternion.copy(localQuat)
     }
     ikSolverRef.current?.update()
   }
