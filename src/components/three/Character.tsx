@@ -8,7 +8,7 @@ import { useAnimationStore } from '@/store/AnimationStore'
 import { useSceneStore } from '@/store/SceneStore'
 import { useFrame } from '@react-three/fiber'
 import { useXRInputSourceState, XRSpace } from '@react-three/xr'
-import { RigidBody, BallCollider } from '@react-three/rapier'
+import { RigidBody, BallCollider, CuboidCollider } from '@react-three/rapier'
 import { SparksEmitter } from './SparksEmitter'
 
 const UNSET_ROUGHNESS = 1
@@ -71,6 +71,7 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
   const skinnedMeshRef = useRef<SkinnedMesh | null>(null)
   const rightHandRigidBodyRef = useRef<any>(null)
   const leftHandRigidBodyRef = useRef<any>(null)
+  const bodyRigidBodyRef = useRef<any>(null)
   const { scale } = useModelStore()
   const { cockpitRef } = useSceneStore()
 
@@ -263,7 +264,7 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
     ikSolverRef.current?.update()
   }
   
-  const handRBDUpdate = () => {
+  const RBDUpdate = () => {
     if (nodes.handR && rightHandRigidBodyRef.current) {
       const handWorldPos = nodes.palm02R.getWorldPosition(new Vector3())
       const handWorldQuat = nodes.palm02R.getWorldQuaternion(new Quaternion())
@@ -277,12 +278,16 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
       leftHandRigidBodyRef.current.setNextKinematicTranslation(handWorldPos)
       leftHandRigidBodyRef.current.setNextKinematicRotation(handWorldQuat)
     }
+    if (nodes.hip && bodyRigidBodyRef.current) {
+      bodyRigidBodyRef.current.setNextKinematicTranslation(nodes.hip.getWorldPosition(new Vector3()))
+      bodyRigidBodyRef.current.setNextKinematicRotation(nodes.hip.getWorldQuaternion(new Quaternion()))
+    }
   } 
 
   useFrame(() => { 
     locomotionUpdate()
     ikUpdate()
-    handRBDUpdate()
+    RBDUpdate()
   })
 
   const handleCollision = (event: any) => {
@@ -301,6 +306,13 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
       <group {...props} ref={characterRef} position={characterPosition} rotation={[0, characterOrientation, 0]}>
         <primitive object={scene} scale={scale} userData={{ isCharacter: true }} />
       </group>
+      <RigidBody
+        ref={bodyRigidBodyRef}
+        name="body"
+        type="kinematicPosition"
+      >
+        <CuboidCollider args={[0.4, 0.9, 0.4]} />
+      </RigidBody>
       <RigidBody 
         ref={rightHandRigidBodyRef}
         mass={1}

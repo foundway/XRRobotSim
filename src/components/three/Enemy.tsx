@@ -1,8 +1,9 @@
 import { Group, Vector3, Quaternion, SkinnedMesh } from 'three'
-import React, { useEffect, useRef } from 'react'
+import { useEffect, useRef, useMemo, useState} from 'react'
 import { useGLTF } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import { RigidBody } from '@react-three/rapier'
+import { Root, Text } from '@react-three/uikit'
 import { SkeletonUtils } from 'three-stdlib'
 import { useAnimationStore } from '@/store/AnimationStore'
 
@@ -14,17 +15,19 @@ interface EnemyProps {
 export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {  
   const modelUrl = 'alien-drone.glb'
   const { scene } = useGLTF(modelUrl)
-  const clone = React.useMemo(() => SkeletonUtils.clone(scene), [scene])
-  const group = React.useRef<Group>(null)
+  const clone = useMemo(() => SkeletonUtils.clone(scene), [scene])
+  const group = useRef<Group>(null)
   const rigidBodyRef = useRef<any>(null)
+  const uiGroupRef = useRef<Group>(null)
+  const hp = useRef(100)
+  const stunStartTime = useRef(0)
   const ENEMY_ORIGIN = initialPosition || new Vector3(0, 4, -5) // Use provided position or default
   const { characterPosition } = useAnimationStore()
   const MOVE_SPEED = 0.5 // Speed at which enemy moves toward character
-  const [isStunned, setIsStunned] = React.useState(false)
-  const stunStartTime = useRef(0)
+  const [isStunned, setIsStunned] = useState(false)
   const STUN_DURATION = 1 // Stun duration in seconds
   const CHARACTER_HEIGHT = new Vector3(0, 2, 0)
-
+  
   useEffect(() => { // Find the skinned mesh in the model
     clone.traverse((child) => {
       if (child instanceof SkinnedMesh) {
@@ -34,18 +37,12 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
   }, [clone])
   
   const handleCollision = (event: any) => {
-    if (event.other.rigidBodyObject) {
-        const userData = event.other.rigidBodyObject.userData
-        if (userData?.isCharacterHand && !isStunned) {
-            setIsStunned(true)
-            stunStartTime.current = Date.now()
-            
-            // Stop current movement
-            if (rigidBodyRef.current) {
-                rigidBodyRef.current.setLinvel({ x: 0, y: 0, z: 0 }, true)
-            }
-        }
-    }
+    if (!event.other.rigidBodyObject) return
+    if (!event.other.rigidBodyObject.userData?.isCharacterHand) return
+    if (isStunned) return
+    setIsStunned(true)
+    stunStartTime.current = Date.now()
+    hp.current -= 30
   }
 
   // Check if stun duration has ended
@@ -62,11 +59,21 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
     }
   }, [isStunned, id])
 
-  useFrame((state) => {
-    if (!rigidBodyRef.current) {
-      return
+  const updateUI = (state: any) => {
+    if (uiGroupRef.current) {
+      const cameraWorldQuat = state.camera.getWorldQuaternion(new Quaternion());
+      if (uiGroupRef.current.parent) {
+        const parentWorldQuat = uiGroupRef.current.parent.getWorldQuaternion(new Quaternion());
+        parentWorldQuat.invert();
+        uiGroupRef.current.quaternion.copy(cameraWorldQuat).premultiply(parentWorldQuat);
+      } else {
+        uiGroupRef.current.quaternion.copy(cameraWorldQuat);
+      }
     }
+  }
 
+  const updateSteering = () => {
+    if (!rigidBodyRef.current) return
     if (isStunned) return
 
     const enemyPosition = rigidBodyRef.current.translation()
@@ -88,8 +95,13 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
       currentQuat.slerp(targetRotation, 0.5)
       rigidBodyRef.current.setRotation(currentQuat, true)
     }
+  }
+
+  useFrame((state) => {
+    updateUI(state)
+    updateSteering()
   })
-  
+
   return (
     <RigidBody 
       ref={rigidBodyRef}
@@ -106,6 +118,19 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
       userData={{ isEnemy: true, enemyId: id }}
     >
       <group ref={group} dispose={null} key={id}>
+        <group ref={uiGroupRef}>
+          <Root
+            pixelSize={0.01}
+            flexDirection={"column"}
+            alignItems={"center"}
+            depthTest={false}
+            depthWrite={false}
+          >
+            <Text fontSize={10} color="white">
+              HP: {hp.current}
+            </Text>
+          </Root>
+        </group>
         <group name="enemy" >
           <primitive object={clone} scale={1} userData={{ isEnemy: true, enemyId: id }} />
         </group>
