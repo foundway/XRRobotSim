@@ -2,7 +2,7 @@ import { Group, Vector3, Quaternion, SkinnedMesh, Mesh, Object3D } from 'three'
 import { useEffect, useRef, useMemo, useState} from 'react'
 import { useGLTF } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
-import { RigidBody, RigidBodyProps, useFixedJoint } from '@react-three/rapier'
+import { RigidBody, RigidBodyProps, useFixedJoint, useRapier } from '@react-three/rapier'
 import { Root, Text } from '@react-three/uikit'
 import { Geometry, SkeletonUtils } from 'three-stdlib'
 import { useAnimationStore } from '@/store/AnimationStore'
@@ -30,6 +30,8 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
   const stunStartTime = useRef(0)
   const { characterPosition } = useAnimationStore()
   const [isStunned, setIsStunned] = useState(false)
+  const [jointsEnabled, setJointsEnabled] = useState(true)
+  const { world: rapierWorld } = useRapier();
 
   const ENEMY_ORIGIN = initialPosition || new Vector3(0, 4, -5) // Use provided position or default
   const MOVE_SPEED = 0.5 // Speed at which enemy moves toward character
@@ -50,21 +52,26 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
   ]);
 
   useEffect(() => {
-    console.log(headTailJoint)
   }, [headTailJoint, headRightHandJoint, headLeftHandJoint])
 
   const handleCollision = (event: any) => {
     if (!event.other.rigidBodyObject) return
     if (!event.other.rigidBodyObject.userData?.isCharacterHand) return
     if (isStunned) return
+    
     setIsStunned(true)
     stunStartTime.current = Date.now()
     hp.current -= 30
-    // headTailJoint.current?.body1.prototype.destroy()
-    // headRightHandJoint.current?.destroy()
-    // headLeftHandJoint.current?.destroy()
+    destroyed()
   }
-
+  
+  const destroyed = () => {
+    if (!headTailJoint.current || !headRightHandJoint.current || !headLeftHandJoint.current) return
+    rapierWorld.removeImpulseJoint(headTailJoint.current, true);
+    rapierWorld.removeImpulseJoint(headRightHandJoint.current, true);
+    rapierWorld.removeImpulseJoint(headLeftHandJoint.current, true);
+  }
+  
   useEffect(() => {
     if (isStunned) {
       const checkStunEnd = () => {
