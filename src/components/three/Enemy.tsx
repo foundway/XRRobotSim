@@ -1,10 +1,10 @@
-import { Group, Vector3, Quaternion, SkinnedMesh } from 'three'
+import { Group, Vector3, Quaternion, SkinnedMesh, Mesh, Object3D } from 'three'
 import { useEffect, useRef, useMemo, useState} from 'react'
 import { useGLTF } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
-import { RigidBody } from '@react-three/rapier'
+import { RigidBody, RigidBodyProps, useFixedJoint } from '@react-three/rapier'
 import { Root, Text } from '@react-three/uikit'
-import { SkeletonUtils } from 'three-stdlib'
+import { Geometry, SkeletonUtils } from 'three-stdlib'
 import { useAnimationStore } from '@/store/AnimationStore'
 
 interface EnemyProps {
@@ -15,27 +15,44 @@ interface EnemyProps {
 export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {  
   const modelUrl = 'alien-drone.glb'
   const { scene } = useGLTF(modelUrl)
-  const clone = useMemo(() => SkeletonUtils.clone(scene), [scene])
+  const headClone = SkeletonUtils.clone(scene.getObjectByName('Head') as Object3D)
+  const tailClone = SkeletonUtils.clone(scene.getObjectByName('Tail') as Object3D)
+  const rightHandClone = SkeletonUtils.clone(scene.getObjectByName('RightHand') as Object3D)
+  const leftHandClone = SkeletonUtils.clone(scene.getObjectByName('LeftHand') as Object3D)
   const group = useRef<Group>(null)
   const rigidBodyRef = useRef<any>(null)
+  const headRigidBodyRef = useRef<any>(null)
+  const tailRigidBodyRef = useRef<any>(null)
+  const rightHandRigidBodyRef = useRef<any>(null)
+  const leftHandRigidBodyRef = useRef<any>(null)
   const uiGroupRef = useRef<Group>(null)
   const hp = useRef(100)
   const stunStartTime = useRef(0)
-  const ENEMY_ORIGIN = initialPosition || new Vector3(0, 4, -5) // Use provided position or default
   const { characterPosition } = useAnimationStore()
-  const MOVE_SPEED = 0.5 // Speed at which enemy moves toward character
   const [isStunned, setIsStunned] = useState(false)
+
+  const ENEMY_ORIGIN = initialPosition || new Vector3(0, 4, -5) // Use provided position or default
+  const MOVE_SPEED = 0.5 // Speed at which enemy moves toward character
   const STUN_DURATION = 1 // Stun duration in seconds
   const CHARACTER_HEIGHT = new Vector3(0, 2, 0)
-  
-  useEffect(() => { // Find the skinned mesh in the model
-    clone.traverse((child) => {
-      if (child instanceof SkinnedMesh) {
-        // Store reference to skinned mesh if needed for future IK or animations
-      }
-    })
-  }, [clone])
-  
+
+  const headTailJoint = useFixedJoint(headRigidBodyRef, tailRigidBodyRef, [
+    [0, 0, 0], [0, 0, 0, 1],
+    [0, 0, 0], [0, 0, 0, 1]
+  ]);
+  const headRightHandJoint = useFixedJoint(headRigidBodyRef, rightHandRigidBodyRef, [
+    [0, 0, 0], [0, 0, 0, 1],
+    [0, 0, 0], [0, 0, 0, 1]
+  ]);
+  const headLeftHandJoint = useFixedJoint(headRigidBodyRef, leftHandRigidBodyRef, [
+    [0, 0, 0], [0, 0, 0, 1],
+    [0, 0, 0], [0, 0, 0, 1]
+  ]);
+
+  useEffect(() => {
+    console.log(headTailJoint)
+  }, [headTailJoint, headRightHandJoint, headLeftHandJoint])
+
   const handleCollision = (event: any) => {
     if (!event.other.rigidBodyObject) return
     if (!event.other.rigidBodyObject.userData?.isCharacterHand) return
@@ -43,9 +60,11 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
     setIsStunned(true)
     stunStartTime.current = Date.now()
     hp.current -= 30
+    // headTailJoint.current?.body1.prototype.destroy()
+    // headRightHandJoint.current?.destroy()
+    // headLeftHandJoint.current?.destroy()
   }
 
-  // Check if stun duration has ended
   useEffect(() => {
     if (isStunned) {
       const checkStunEnd = () => {
@@ -53,7 +72,6 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
           setIsStunned(false)
         }
       }
-      
       const interval = setInterval(checkStunEnd, 100)
       return () => clearInterval(interval)
     }
@@ -73,14 +91,14 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
   }
 
   const updateSteering = () => {
-    if (!rigidBodyRef.current) return
+    if (!headRigidBodyRef.current) return
     if (isStunned) return
 
-    const enemyPosition = rigidBodyRef.current.translation()
+    const enemyPosition = headRigidBodyRef.current.translation()
     const enemyPos = new Vector3(enemyPosition.x, enemyPosition.y, enemyPosition.z)
     const direction = characterPosition.clone().add(CHARACTER_HEIGHT).sub(enemyPos).normalize()
     
-    rigidBodyRef.current.setLinvel(direction.multiplyScalar(MOVE_SPEED), true)
+    headRigidBodyRef.current.setLinvel(direction.multiplyScalar(MOVE_SPEED), true)
 
     // Make enemy face the character with some smoothing
     if (direction.length() > 0.1) {
@@ -90,10 +108,10 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
       )
       
       // Smooth rotation
-      const currentRotation = rigidBodyRef.current.rotation()
+      const currentRotation = headRigidBodyRef.current.rotation()
       const currentQuat = new Quaternion(currentRotation.x, currentRotation.y, currentRotation.z, currentRotation.w)
       currentQuat.slerp(targetRotation, 0.5)
-      rigidBodyRef.current.setRotation(currentQuat, true)
+      headRigidBodyRef.current.setRotation(currentQuat, true)
     }
   }
 
@@ -102,39 +120,67 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
     updateSteering()
   })
 
+  const rigidBodyConfig: RigidBodyProps = {
+    colliders: "ball",
+    mass: 1000,
+    friction: 0.7,
+    restitution: 0.1,
+    linearDamping: 0.8,
+    angularDamping: 0.8,
+    gravityScale: 0,
+    onCollisionEnter: handleCollision,
+    userData: { isEnemy: true, enemyId: id }
+  }
+
   return (
-    <RigidBody 
-      ref={rigidBodyRef}
-      position={ENEMY_ORIGIN}
-      colliders="ball"
-      args={[0.5]}
-      mass={1000}
-      friction={0.7}
-      restitution={0.1}
-      linearDamping={0.8}
-      angularDamping={0.8}
-      gravityScale={0}
-      onCollisionEnter={handleCollision}
-      userData={{ isEnemy: true, enemyId: id }}
-    >
-      <group ref={group} dispose={null} key={id}>
+    <group ref={group} dispose={null} key={id}>
+
+
+      <RigidBody
+        ref={headRigidBodyRef}
+        name="head"
+        position={ENEMY_ORIGIN}
+        {...rigidBodyConfig}
+      >
+        <primitive object={headClone} scale={1} />
         <group ref={uiGroupRef}>
-          <Root
-            pixelSize={0.01}
-            flexDirection={"column"}
-            alignItems={"center"}
-            depthTest={false}
-            depthWrite={false}
-          >
-            <Text fontSize={10} color="white">
-              HP: {hp.current}
-            </Text>
-          </Root>
-        </group>
-        <group name="enemy" >
-          <primitive object={clone} scale={1} userData={{ isEnemy: true, enemyId: id }} />
-        </group>
+        <Root pixelSize={0.01} depthTest={false} depthWrite={false} >
+          <Text fontSize={10} color="white">
+            HP: {hp.current}
+          </Text>
+        </Root>
       </group>
-    </RigidBody>
+      </RigidBody>
+
+      {/* Tail rigid body */}
+      <RigidBody
+        ref={tailRigidBodyRef}
+        position={ENEMY_ORIGIN}
+        sensor={true}
+        {...rigidBodyConfig}
+      >
+        <primitive object={tailClone} scale={1} />
+      </RigidBody>
+
+      {/* Right Hand rigid body */}
+      <RigidBody
+        ref={rightHandRigidBodyRef}
+        position={ENEMY_ORIGIN}
+        sensor={true}
+        {...rigidBodyConfig}
+      >
+        <primitive object={rightHandClone} scale={1} />
+      </RigidBody>
+
+      {/* Left Hand rigid body */}
+      <RigidBody
+        ref={leftHandRigidBodyRef}
+        position={ENEMY_ORIGIN}
+        sensor={true}
+        {...rigidBodyConfig}
+      >
+        <primitive object={leftHandClone} scale={1} />
+      </RigidBody>
+    </group>
   )
 } 
