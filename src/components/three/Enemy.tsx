@@ -1,11 +1,17 @@
-import { Group, Vector3, Quaternion, SkinnedMesh, Mesh, Object3D, MathUtils } from 'three'
-import { useEffect, useRef, useMemo, useState} from 'react'
+import { Group, Vector3, Quaternion, Object3D, MathUtils } from 'three'
+import { useEffect, useRef, useState} from 'react'
 import { useGLTF } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import { RigidBody, RigidBodyProps, useFixedJoint, useRapier } from '@react-three/rapier'
 import { Root, Text } from '@react-three/uikit'
-import { Geometry, SkeletonUtils } from 'three-stdlib'
+import { SkeletonUtils } from 'three-stdlib'
 import { useAnimationStore } from '@/store/AnimationStore'
+
+const MOVE_SPEED = 0.5
+const STUN_DURATION = 1 
+const CHARACTER_HEIGHT = new Vector3(0, 2, 0)
+const DESTROYED_DURATION = 1 
+const FORCE_DAMAGE_MULTIPLIER = 0.1
 
 enum EnemyState {
   ALIVE,
@@ -41,10 +47,6 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
   const { world: rapierWorld } = useRapier();
 
   const ENEMY_ORIGIN = initialPosition || new Vector3(0, 4, -5) // Use provided position or default
-  const MOVE_SPEED = 0.5 // Speed at which enemy moves toward character
-  const STUN_DURATION = 1 // Stun duration in seconds
-  const CHARACTER_HEIGHT = new Vector3(0, 2, 0)
-  const DESTROYED_DURATION = 1 // Destroyed duration in seconds
 
   const headTailJoint = useFixedJoint(headRigidBodyRef, tailRigidBodyRef, [
     [0, 0, 0], [0, 0, 0, 1],
@@ -63,12 +65,14 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
     if (!event.other.rigidBodyObject) return;
     if (!event.other.rigidBodyObject.userData?.isCharacterHand) return;
 
-    hp.current -= 100;
+    const force = new Vector3(event.totalForce.x, event.totalForce.y, event.totalForce.z);
+
+    hp.current -= Math.max(0, Math.floor(force.length() * FORCE_DAMAGE_MULTIPLIER));
     if (hp.current > 0) {
       setEnemyState(EnemyState.STUNNED);
-      stunStartTime.current = Date.now();
+      stunStartTime.current = Date.now()
     } else {
-      destroyed(event.totalForce);
+      destroyed(force);
     }
   }
   
@@ -87,8 +91,8 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
     rightHandRigidBodyRef.current.setGravityScale(1)
     leftHandRigidBodyRef.current.setGravityScale(1)
 
-    const randomVec = (mag = 0.1) => new Vector3().randomDirection().multiplyScalar(mag);
-    const randomTorque = (mag = 0.5) => new Vector3().randomDirection().multiplyScalar(mag);
+    const randomVec = () => new Vector3().randomDirection().multiplyScalar(MathUtils.randFloat(0, 0.2));
+    const randomTorque = () => new Vector3().randomDirection().multiplyScalar(MathUtils.randFloat(0, 0.2));
 
     headRigidBodyRef.current.applyImpulse(randomVec(), true)
     headRigidBodyRef.current.applyTorqueImpulse(randomTorque(), true)
@@ -152,7 +156,9 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
     const enemyPos = new Vector3(enemyPosition.x, enemyPosition.y, enemyPosition.z)
     const direction = characterPosition.clone().add(CHARACTER_HEIGHT).sub(enemyPos).normalize()
     
-    headRigidBodyRef.current.setLinvel(direction.multiplyScalar(MOVE_SPEED), true)
+    // Create separate vectors for velocity and rotation to avoid modifying the original direction
+    const velocity = direction.clone().multiplyScalar(MOVE_SPEED)
+    headRigidBodyRef.current.setLinvel(velocity, true)
 
     // Make enemy face the character with some smoothing
     if (direction.length() > 0.1) {
@@ -176,10 +182,10 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
 
   const rigidBodyConfig: RigidBodyProps = {
     colliders: "ball",
-    mass: 1,
+    mass: 100,
     friction: 0.7,
     restitution: 0.1,
-    linearDamping: 0.1,
+    linearDamping: 0.9,
     angularDamping: 0.1,
     gravityScale: enemyState === EnemyState.ALIVE ? 0 : 0.1,
     onContactForce: handleContactForce,
