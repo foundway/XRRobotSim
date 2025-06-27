@@ -1,4 +1,4 @@
-import { Group, Vector3, Quaternion, SkinnedMesh, Mesh, Object3D } from 'three'
+import { Group, Vector3, Quaternion, SkinnedMesh, Mesh, Object3D, MathUtils } from 'three'
 import { useEffect, useRef, useMemo, useState} from 'react'
 import { useGLTF } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
@@ -29,6 +29,7 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
   const group = useRef<Group>(null)
   const headRigidBodyRef = useRef<any>(null)
   const tailRigidBodyRef = useRef<any>(null)
+  const remainingForce = useRef(new Vector3())
   const rightHandRigidBodyRef = useRef<any>(null)
   const leftHandRigidBodyRef = useRef<any>(null)
   const uiGroupRef = useRef<Group>(null)
@@ -38,8 +39,6 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
   const { characterPosition } = useAnimationStore()
   const [enemyState, setEnemyState] = useState(EnemyState.ALIVE)
   const { world: rapierWorld } = useRapier();
-  const scaleRef = useRef(1)
-  const [isRemoved, setIsRemoved] = useState(false)
 
   const ENEMY_ORIGIN = initialPosition || new Vector3(0, 4, -5) // Use provided position or default
   const MOVE_SPEED = 0.5 // Speed at which enemy moves toward character
@@ -60,34 +59,58 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
     [0, 0, 0], [0, 0, 0, 1]
   ]);
 
-  const handleCollision = (event: any) => {
-    if (!event.other.rigidBodyObject) return
-    if (!event.other.rigidBodyObject.userData?.isCharacterHand) return
-    if (enemyState === EnemyState.STUNNED) return
-    
-    setEnemyState(EnemyState.STUNNED)
-    stunStartTime.current = Date.now()
-    hp.current -= 100
-    if (hp.current <= 0) {
-      destroyed()
+  const handleContactForce = (event: any) => {
+    if (!event.other.rigidBodyObject) return;
+    if (!event.other.rigidBodyObject.userData?.isCharacterHand) return;
+
+    hp.current -= 100;
+    if (hp.current > 0) {
+      setEnemyState(EnemyState.STUNNED);
+      stunStartTime.current = Date.now();
+    } else {
+      destroyed(event.totalForce);
     }
   }
   
-  const destroyed = () => {
+  const destroyed = (force: Vector3) => {
+    if (!headTailJoint.current || !headRightHandJoint.current || !headLeftHandJoint.current) return
+
     setEnemyState(EnemyState.DESTROYED)
     destroyedStartTime.current = Date.now()
-    if (!headTailJoint.current || !headRightHandJoint.current || !headLeftHandJoint.current) return
+
     rapierWorld.removeImpulseJoint(headTailJoint.current, true);
     rapierWorld.removeImpulseJoint(headRightHandJoint.current, true);
     rapierWorld.removeImpulseJoint(headLeftHandJoint.current, true);
-    tailRigidBodyRef.current.setSensor(false)
-    rightHandRigidBodyRef.current.setSensor(false)
-    leftHandRigidBodyRef.current.setSensor(false)
-    tailRigidBodyRef.current.setGravityScale(9.8)
-    rightHandRigidBodyRef.current.setGravityScale(9.8)
-    leftHandRigidBodyRef.current.setGravityScale(9.8)
+
+    headRigidBodyRef.current.setGravityScale(1)
+    tailRigidBodyRef.current.setGravityScale(1)
+    rightHandRigidBodyRef.current.setGravityScale(1)
+    leftHandRigidBodyRef.current.setGravityScale(1)
+
+    const randomVec = (mag = 0.1) => new Vector3().randomDirection().multiplyScalar(mag);
+    const randomTorque = (mag = 0.5) => new Vector3().randomDirection().multiplyScalar(mag);
+
+    headRigidBodyRef.current.applyImpulse(randomVec(), true)
+    headRigidBodyRef.current.applyTorqueImpulse(randomTorque(), true)
+
+    tailRigidBodyRef.current.setLinvel(headRigidBodyRef.current.linvel(), true)
+    tailRigidBodyRef.current.setAngvel(headRigidBodyRef.current.angvel(), true)
+    tailRigidBodyRef.current.applyImpulse(randomVec(), true)
+    tailRigidBodyRef.current.applyTorqueImpulse(randomTorque(), true)
+    
+    rightHandRigidBodyRef.current.setLinvel(headRigidBodyRef.current.linvel(), true)
+    rightHandRigidBodyRef.current.setAngvel(headRigidBodyRef.current.angvel(), true)
+    rightHandRigidBodyRef.current.applyImpulse(randomVec(), true)
+    rightHandRigidBodyRef.current.applyTorqueImpulse(randomTorque(), true)
+
+    leftHandRigidBodyRef.current.setLinvel(headRigidBodyRef.current.linvel(), true)
+    leftHandRigidBodyRef.current.setAngvel(headRigidBodyRef.current.angvel(), true)
+    leftHandRigidBodyRef.current.applyImpulse(randomVec(), true)
+    leftHandRigidBodyRef.current.applyTorqueImpulse(randomTorque(), true)
+
+    remainingForce.current = force.clone()
   }
-  
+
   useEffect(() => {
     if (enemyState === EnemyState.STUNNED) {
       const checkStunEnd = () => {
@@ -153,13 +176,13 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
 
   const rigidBodyConfig: RigidBodyProps = {
     colliders: "ball",
-    mass: 1000,
+    mass: 1,
     friction: 0.7,
     restitution: 0.1,
-    linearDamping: 0.8,
-    angularDamping: 0.8,
-    gravityScale: enemyState === EnemyState.ALIVE ? 0 : 1,
-    onCollisionEnter: handleCollision,
+    linearDamping: 0.1,
+    angularDamping: 0.1,
+    gravityScale: enemyState === EnemyState.ALIVE ? 0 : 0.1,
+    onContactForce: handleContactForce,
     userData: { isEnemy: true, enemyId: id }
   }
 
