@@ -9,6 +9,11 @@ import { EnemySpawner } from '@/components/three/EnemySpawner'
 import { MainMenu } from '@/components/ui/MainMenu'
 import { useSceneStore } from '@/store/SceneStore'
 import SparksParticles from './SparksParticles'
+import DebrisParticles from './DebrisParticles'
+import { DebrisEmitter } from './DebrisEmitter'
+import { Vector3 } from 'three'
+import { VFXEmitter } from 'wawa-vfx'
+import { CustomGeometry } from './CustomGeometry'
 
 const Scene = () => {
   const { showGrid, orbitCenter, stageRadius } = useSceneStore()
@@ -30,6 +35,9 @@ const Scene = () => {
       <Character />
       <EnemySpawner />
       <SparksParticles />
+      {/* <DebrisParticles />
+      <DebrisEmitter /> */}
+      {/* <CustomGeometry /> */}
       {!session && <OrbitControls target={[0, orbitCenter, -3]} />}
       {showGrid && (
         <Grid

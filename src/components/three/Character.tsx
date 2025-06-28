@@ -372,7 +372,6 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
           quaternion={nodes['shoulderR'].getWorldQuaternion(new Quaternion())} 
         /> */}
       </group>
-
     </>
   )
 }

@@ -2,7 +2,7 @@ import { Group, Vector3, Quaternion, Object3D, MathUtils } from 'three'
 import { useEffect, useRef, useState} from 'react'
 import { useGLTF } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
-import { RigidBody, RigidBodyProps, useFixedJoint, useRapier } from '@react-three/rapier'
+import { RigidBody, RigidBodyProps, useFixedJoint, useRapier, BallCollider } from '@react-three/rapier'
 import { Root, Text } from '@react-three/uikit'
 import { SkeletonUtils } from 'three-stdlib'
 import { useAnimationStore } from '@/store/AnimationStore'
@@ -27,11 +27,11 @@ interface EnemyProps {
 
 export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {  
   const modelUrl = 'alien-drone.glb'
-  const { scene } = useGLTF(modelUrl)
-  const headClone = SkeletonUtils.clone(scene.getObjectByName('Head') as Object3D)
-  const tailClone = SkeletonUtils.clone(scene.getObjectByName('Tail') as Object3D)
-  const rightHandClone = SkeletonUtils.clone(scene.getObjectByName('RightHand') as Object3D)
-  const leftHandClone = SkeletonUtils.clone(scene.getObjectByName('LeftHand') as Object3D)
+  const sceneClone = SkeletonUtils.clone(useGLTF(modelUrl).scene)
+  // const headClone = SkeletonUtils.clone(scene.getObjectByName('Head') as Object3D)
+  // const tailClone = SkeletonUtils.clone(scene.getObjectByName('Tail') as Object3D)
+  // const rightHandClone = SkeletonUtils.clone(scene.getObjectByName('RightHand') as Object3D)
+  // const leftHandClone = SkeletonUtils.clone(scene.getObjectByName('LeftHand') as Object3D)
   const group = useRef<Group>(null)
   const headRigidBodyRef = useRef<any>(null)
   const tailRigidBodyRef = useRef<any>(null)
@@ -77,19 +77,19 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
   }
   
   const destroyed = (force: Vector3) => {
-    if (!headTailJoint.current || !headRightHandJoint.current || !headLeftHandJoint.current) return
+    if (!headTailJoint.current) return
 
     setEnemyState(EnemyState.DESTROYED)
     destroyedStartTime.current = Date.now()
 
-    rapierWorld.removeImpulseJoint(headTailJoint.current, true);
-    rapierWorld.removeImpulseJoint(headRightHandJoint.current, true);
-    rapierWorld.removeImpulseJoint(headLeftHandJoint.current, true);
+    // rapierWorld.removeImpulseJoint(headTailJoint.current, true);
+    // rapierWorld.removeImpulseJoint(headRightHandJoint.current, true);
+    // rapierWorld.removeImpulseJoint(headLeftHandJoint.current, true);
 
     headRigidBodyRef.current.setGravityScale(1)
-    tailRigidBodyRef.current.setGravityScale(1)
-    rightHandRigidBodyRef.current.setGravityScale(1)
-    leftHandRigidBodyRef.current.setGravityScale(1)
+    // tailRigidBodyRef.current.setGravityScale(1)
+    // rightHandRigidBodyRef.current.setGravityScale(1)
+    // leftHandRigidBodyRef.current.setGravityScale(1)
 
     const randomVec = () => new Vector3().randomDirection().multiplyScalar(MathUtils.randFloat(0, 0.2));
     const randomTorque = () => new Vector3().randomDirection().multiplyScalar(MathUtils.randFloat(0, 0.2));
@@ -97,22 +97,20 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
     headRigidBodyRef.current.applyImpulse(randomVec(), true)
     headRigidBodyRef.current.applyTorqueImpulse(randomTorque(), true)
 
-    tailRigidBodyRef.current.setLinvel(headRigidBodyRef.current.linvel(), true)
-    tailRigidBodyRef.current.setAngvel(headRigidBodyRef.current.angvel(), true)
-    tailRigidBodyRef.current.applyImpulse(randomVec(), true)
-    tailRigidBodyRef.current.applyTorqueImpulse(randomTorque(), true)
+    // tailRigidBodyRef.current.setLinvel(headRigidBodyRef.current.linvel(), true)
+    // tailRigidBodyRef.current.setAngvel(headRigidBodyRef.current.angvel(), true)
+    // tailRigidBodyRef.current.applyImpulse(randomVec(), true)
+    // tailRigidBodyRef.current.applyTorqueImpulse(randomTorque(), true)
     
-    rightHandRigidBodyRef.current.setLinvel(headRigidBodyRef.current.linvel(), true)
-    rightHandRigidBodyRef.current.setAngvel(headRigidBodyRef.current.angvel(), true)
-    rightHandRigidBodyRef.current.applyImpulse(randomVec(), true)
-    rightHandRigidBodyRef.current.applyTorqueImpulse(randomTorque(), true)
+    // rightHandRigidBodyRef.current.setLinvel(headRigidBodyRef.current.linvel(), true)
+    // rightHandRigidBodyRef.current.setAngvel(headRigidBodyRef.current.angvel(), true)
+    // rightHandRigidBodyRef.current.applyImpulse(randomVec(), true)
+    // rightHandRigidBodyRef.current.applyTorqueImpulse(randomTorque(), true)
 
-    leftHandRigidBodyRef.current.setLinvel(headRigidBodyRef.current.linvel(), true)
-    leftHandRigidBodyRef.current.setAngvel(headRigidBodyRef.current.angvel(), true)
-    leftHandRigidBodyRef.current.applyImpulse(randomVec(), true)
-    leftHandRigidBodyRef.current.applyTorqueImpulse(randomTorque(), true)
-
-    remainingForce.current = force.clone()
+    // leftHandRigidBodyRef.current.setLinvel(headRigidBodyRef.current.linvel(), true)
+    // leftHandRigidBodyRef.current.setAngvel(headRigidBodyRef.current.angvel(), true)
+    // leftHandRigidBodyRef.current.applyImpulse(randomVec(), true)
+    // leftHandRigidBodyRef.current.applyTorqueImpulse(randomTorque(), true)
   }
 
   useEffect(() => {
@@ -180,18 +178,6 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
     updateSteering()
   })
 
-  const rigidBodyConfig: RigidBodyProps = {
-    colliders: "ball",
-    mass: 100,
-    friction: 0.7,
-    restitution: 0.1,
-    linearDamping: 0.9,
-    angularDamping: 0.1,
-    gravityScale: enemyState === EnemyState.ALIVE ? 0 : 0.1,
-    onContactForce: handleContactForce,
-    userData: { isEnemy: true, enemyId: id }
-  }
-
   return (
     <group ref={group} dispose={null} key={id}>
       {enemyState !== EnemyState.REMOVED && (
@@ -200,9 +186,18 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
             ref={headRigidBodyRef}
             name="head"
             position={ENEMY_ORIGIN}
-            {...rigidBodyConfig}
+            mass={100}
+            colliders={false}
+            friction={0.7}
+            restitution={0.1}
+            linearDamping={0.9}
+            angularDamping={0.1}
+            gravityScale={enemyState === EnemyState.ALIVE ? 0 : 0.1}
+            onContactForce={handleContactForce}
+            userData={{ isEnemy: true, enemyId: id }}
           >
-            <primitive object={headClone}/>
+            <BallCollider args={[0.4]} />
+            <primitive object={sceneClone}/>
             <group ref={uiGroupRef}>
               <Root pixelSize={0.01} depthTest={false} depthWrite={false} >
                 <Text fontSize={10} color="white">
@@ -210,33 +205,6 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
                 </Text>
               </Root>
             </group>
-          </RigidBody>
-
-          <RigidBody
-            ref={tailRigidBodyRef}
-            position={ENEMY_ORIGIN}
-            sensor={enemyState === EnemyState.ALIVE}
-            {...rigidBodyConfig}
-          >
-            <primitive object={tailClone}/>
-          </RigidBody>
-
-          <RigidBody
-            ref={rightHandRigidBodyRef}
-            position={ENEMY_ORIGIN}
-            sensor={enemyState === EnemyState.ALIVE}
-            {...rigidBodyConfig}
-          >
-            <primitive object={rightHandClone}/>
-          </RigidBody>
-
-          <RigidBody
-            ref={leftHandRigidBodyRef}
-            position={ENEMY_ORIGIN}
-            sensor={enemyState === EnemyState.ALIVE}
-            {...rigidBodyConfig}
-          >
-            <primitive object={leftHandClone}/>
           </RigidBody>
         </>
       )}
