@@ -1,4 +1,4 @@
-import { Group, Vector3, Quaternion  } from 'three'
+import { Group, Vector3, Quaternion } from 'three'
 import { useEffect, useRef, useState} from 'react'
 import { useGLTF } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
@@ -13,6 +13,7 @@ const STUN_DURATION = 1
 const CHARACTER_HEIGHT = new Vector3(0, 2, 0)
 const DESTROYED_DURATION = 1 
 const FORCE_DAMAGE_MULTIPLIER = 0.5
+const MAX_VEL = 10
 
 enum EnemyState {
   ALIVE,
@@ -44,12 +45,18 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
     if (!event.other.rigidBodyObject.userData?.isCharacterHand) return;
 
     const force = new Vector3(event.totalForce.x, event.totalForce.y, event.totalForce.z);
-
     hp.current -= Math.max(0, Math.floor(force.length() * FORCE_DAMAGE_MULTIPLIER));
+
     setEnemyState(EnemyState.STUNNED);
+
+    const vel = new Vector3().copy(event.target.rigidBody.linvel())
+    if (vel.length() > MAX_VEL) {
+      event.target.rigidBody.setLinvel(vel.normalize().multiplyScalar(MAX_VEL), true)
+    }
+
     stunStartTime.current = Date.now()
   }
-  
+
   const destroyed = () => {
     setEnemyState(EnemyState.DESTROYED)
     destroyedStartTime.current = Date.now()
