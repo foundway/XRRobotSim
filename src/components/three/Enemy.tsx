@@ -1,13 +1,12 @@
-import { Group, Vector3, Quaternion, Object3D, MathUtils } from 'three'
+import { Group, Vector3, Quaternion  } from 'three'
 import { useEffect, useRef, useState} from 'react'
 import { useGLTF } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
-import { RigidBody, RigidBodyProps, useFixedJoint, useRapier, BallCollider } from '@react-three/rapier'
+import { RigidBody, BallCollider } from '@react-three/rapier'
 import { Root, Text } from '@react-three/uikit'
 import { SkeletonUtils } from 'three-stdlib'
 import { useAnimationStore } from '@/store/AnimationStore'
-import { DebrisEmitter } from './DebrisEmitter'
-import { FlareEmitter } from './FalreEmitter'
+import { DebrisBurstEmitter, DebrisTimeEmitter } from './DebrisEmitter'
 
 const MOVE_SPEED = 0.5
 const STUN_DURATION = 1 
@@ -31,7 +30,7 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
   const modelUrl = 'alien-drone.glb'
   const sceneClone = SkeletonUtils.clone(useGLTF(modelUrl).scene)
   const group = useRef<Group>(null)
-  const headRigidBodyRef = useRef<any>(null)
+  const rbdRef = useRef<any>(null)
   const uiGroupRef = useRef<Group>(null)
   const hp = useRef(100)
   const stunStartTime = useRef(0)
@@ -51,11 +50,10 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
     stunStartTime.current = Date.now()
   }
   
-  const destroyed = (force: Vector3) => {
+  const destroyed = () => {
     setEnemyState(EnemyState.DESTROYED)
-    console.log('destroyed')
     destroyedStartTime.current = Date.now()
-    headRigidBodyRef.current.setGravityScale(1)
+    rbdRef.current.setGravityScale(1)
   }
 
   useEffect(() => {
@@ -63,7 +61,7 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
       const checkStunEnd = () => {
         if (Date.now() - stunStartTime.current >= STUN_DURATION * 1000) {
           if (hp.current <= 0) {
-            destroyed(new Vector3(0, 0, 0))
+            destroyed()
           } else {
             setEnemyState(EnemyState.ALIVE)
           }
@@ -74,7 +72,7 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
     } else if (enemyState === EnemyState.DESTROYED) {
       const checkDestroyedEnd = () => {
         if (Date.now() - destroyedStartTime.current >= DESTROYED_DURATION * 1000) {
-          console.log('removed')
+          console.log('Removed enemy id: ', id)
           setEnemyState(EnemyState.REMOVED)
         }
       }
@@ -98,15 +96,15 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
 
   const updateSteering = () => {
     if (enemyState !== EnemyState.ALIVE) return;
-    if (!headRigidBodyRef.current) return;
+    if (!rbdRef.current) return;
 
-    const enemyPosition = headRigidBodyRef.current.translation();
+    const enemyPosition = rbdRef.current.translation();
     const enemyPos = new Vector3(enemyPosition.x, enemyPosition.y, enemyPosition.z)
     const direction = characterPosition.clone().add(CHARACTER_HEIGHT).sub(enemyPos).normalize()
     
     // Create separate vectors for velocity and rotation to avoid modifying the original direction
     const velocity = direction.clone().multiplyScalar(MOVE_SPEED)
-    headRigidBodyRef.current.setLinvel(velocity, true)
+    rbdRef.current.setLinvel(velocity, true)
 
     // Make enemy face the character with some smoothing
     if (direction.length() > 0.1) {
@@ -116,10 +114,10 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
       )
       
       // Smooth rotation
-      const currentRotation = headRigidBodyRef.current.rotation()
+      const currentRotation = rbdRef.current.rotation()
       const currentQuat = new Quaternion(currentRotation.x, currentRotation.y, currentRotation.z, currentRotation.w)
       currentQuat.slerp(targetRotation, 0.5)
-      headRigidBodyRef.current.setRotation(currentQuat, true)
+      rbdRef.current.setRotation(currentQuat, true)
     }
   }
 
@@ -133,8 +131,8 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
       {enemyState !== EnemyState.REMOVED && (
         <>
           <RigidBody
-            ref={headRigidBodyRef}
-            name="head"
+            ref={rbdRef}
+            name="enemy"
             position={ENEMY_ORIGIN}
             mass={100}
             colliders={false}
@@ -147,8 +145,12 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
             userData={{ isEnemy: true, enemyId: id }}
           >
             <BallCollider args={[0.4]} />
-            {(enemyState === EnemyState.DESTROYED || enemyState === EnemyState.STUNNED) && <DebrisEmitter />}
-            {enemyState === EnemyState.DESTROYED && <FlareEmitter />}
+            {enemyState === EnemyState.STUNNED && (
+              <DebrisTimeEmitter velocity={rbdRef.current?.linvel()} />
+            )}
+            {enemyState === EnemyState.DESTROYED && (
+              <DebrisBurstEmitter velocity={rbdRef.current?.linvel()} />
+            )}
             {enemyState !== EnemyState.DESTROYED && <primitive object={sceneClone}/>}
             <group ref={uiGroupRef}>
               <Root pixelSize={0.01} depthTest={false} depthWrite={false} >

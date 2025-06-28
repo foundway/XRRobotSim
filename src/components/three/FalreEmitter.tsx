@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { VFXEmitter } from 'wawa-vfx'
 
-const POSITION_SPREAD = 0.7
+const POSITION_SPREAD = 0.2
 const DESTROY_DELAY = 1500
 
 export const FlareEmitter = () => {
@@ -23,15 +23,16 @@ export const FlareEmitter = () => {
       emitter="flare"
       settings={{
         spawnMode: "burst",
-        delay: 0,
         loop: true,
         duration: 0.5,
         nbParticles: 10,
-        size: [5, 10],
-        particlesLifetime: [0.2, 0.5],
-        speed: [0, 2],
+        size: [2, 3],
+        particlesLifetime: [0.1, 0.2],
+        speed: [0, 0],
         startPositionMin: [-POSITION_SPREAD, -POSITION_SPREAD, -POSITION_SPREAD],
         startPositionMax: [POSITION_SPREAD, POSITION_SPREAD, POSITION_SPREAD],
+        startRotationMin: [0, 0, -6.28],
+        startRotationMax: [0, 0, 6.28],
         colorStart: ["#77ff77"],
         colorEnd: ["#ff1111"],
       }}

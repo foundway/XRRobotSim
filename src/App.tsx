@@ -11,6 +11,8 @@ import { BsHeadsetVr } from "react-icons/bs";
 import { MdOutlineFileUpload } from "react-icons/md";
 import XRController from './components/three/XRController'
 
+export const DEBUG = false
+
 const ModelInfoCard = () => {
   const { currentModel } = useModels();
   
@@ -131,7 +133,7 @@ const App = () => {
           shadows
         >
           <XR store={store}>
-            <Physics debug={true}>
+            <Physics debug={DEBUG}>
               <Scene />
             </Physics>
           </XR>

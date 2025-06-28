@@ -9,10 +9,9 @@ import { EnemySpawner } from '@/components/three/EnemySpawner'
 import { MainMenu } from '@/components/ui/MainMenu'
 import { useSceneStore } from '@/store/SceneStore'
 import { DebrisParticles, FlareParticles, SparksParticles } from './Particles'
-import { VFXEmitter } from 'wawa-vfx'
 
 const Scene = () => {
-  const { showGrid, orbitCenter, stageRadius } = useSceneStore()
+  const { showGrid, orbitCenter } = useSceneStore()
   const { camera } = useThree()
   const { session } = useXR()
 

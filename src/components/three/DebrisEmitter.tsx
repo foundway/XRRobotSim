@@ -1,48 +1,73 @@
-import { useEffect, useState } from 'react'
-import { VFXEmitter } from 'wawa-vfx'
-import { Vector3 } from 'three'
-import { useGLTF } from '@react-three/drei'
+import { RenderMode, VFXEmitter } from 'wawa-vfx'
+import { Vector3 } from 'three';
 
-export const DebrisEmitter = () => {
-  const POSITION_SPREAD = 0.2
-  const DIRECTION_SPREAD = 1
+const DIR_SPREAD = 10
+const POS_SPREAD = 0.25
 
-  // useEffect(() => {
-  //   const timer = setTimeout(() => {
-  //     setShouldDestroy(true)
-  //   }, 1000) // Self-destruct after 1 second
+const PARTICLE_SETTINGS = {
+  intensity: 2,
+  particlesLifetime: [0.5, 1] as [number, number],
+  gravity: [0, -9.8, 0] as [number, number, number], 
+  fadeSize: [0.15, 0] as [number, number],
+  fadeAlpha: [0.15, 0] as [number, number],
+  renderMode: RenderMode.Billboard,
+  frustumCulled: false,
+  startPositionMin: [-POS_SPREAD, -POS_SPREAD, -POS_SPREAD] as [number, number, number],
+  startPositionMax: [POS_SPREAD, POS_SPREAD, POS_SPREAD] as [number, number, number],
+  directionMin: [-DIR_SPREAD, -DIR_SPREAD, -DIR_SPREAD] as [number, number, number],
+  directionMax: [DIR_SPREAD, DIR_SPREAD, DIR_SPREAD] as [number, number, number],
+  rotationSpeedMin: [-3.14, -3.14, -31.4] as [number, number, number],
+  rotationSpeedMax: [3.14, 3.14, 31.4] as [number, number, number],
+  startRotationMin: [0, 0, -6.28] as [number, number, number],
+  startRotationMax: [0, 0, 6.28] as [number, number, number],
+  colorStart: ["#77ff77"],
+  colorEnd: ["#ff1111"]
+}; 
 
-  //   return () => clearTimeout(timer)
-  // }, [])
-
-  // if (shouldDestroy) {
-  //   return null
-  // }
-
+export const DebrisTimeEmitter = ({ velocity }: { velocity: Vector3 }) => {
+  const dir = velocity ? 
+    [velocity.x, velocity.y, velocity.z] as [number, number, number] : 
+    [0, 0, 0] as [number, number, number];
+  const dirMin: [number, number, number] = [dir[0] - DIR_SPREAD, dir[1] - DIR_SPREAD, dir[2] - DIR_SPREAD];
+  const dirMax: [number, number, number] = [dir[0] + DIR_SPREAD, dir[1] + DIR_SPREAD, dir[2] + DIR_SPREAD];
   return (
     <VFXEmitter
       emitter="debris"
       settings={{
+        ...PARTICLE_SETTINGS,
         spawnMode: "time",
-        delay: 0,
         loop: true,
-        duration: 2,
-        nbParticles: 100,
         size: [0.15, 0.5],
-        particlesLifetime: [0.5, 1],
-        speed: [0, 2],
-        directionMin: [-DIRECTION_SPREAD, -DIRECTION_SPREAD, -DIRECTION_SPREAD],
-        directionMax: [DIRECTION_SPREAD, DIRECTION_SPREAD, DIRECTION_SPREAD],
-        rotationSpeedMin: [-3.14, -3.14, -31.4],
-        rotationSpeedMax: [3.14, 3.14, 31.4],
-        startPositionMin: [-POSITION_SPREAD, -POSITION_SPREAD, -POSITION_SPREAD],
-        startPositionMax: [POSITION_SPREAD, POSITION_SPREAD, POSITION_SPREAD],
-        startRotationMin: [0, 0, -6.28],
-        startRotationMax: [0, 0, 6.28],
-        colorStart: ["#77ff77"],
-        colorEnd: ["#ff1111"],
+        duration: 1,
+        nbParticles: 30,
+        speed: [0.1, 2],
+        directionMin: dirMin,
+        directionMax: dirMax,
       }}
     />
   )
 } 
-// useGLTF.preload("debris.glb");
+
+export const DebrisBurstEmitter = ({ velocity }: { velocity: Vector3 }) => {
+  const dir = velocity ? 
+    [velocity.x, velocity.y, velocity.z] as [number, number, number] : 
+    [0, 0, 0] as [number, number, number];
+  const dirMin: [number, number, number] = [dir[0] - DIR_SPREAD, dir[1] - DIR_SPREAD, dir[2] - DIR_SPREAD];
+  const dirMax: [number, number, number] = [dir[0] + DIR_SPREAD, dir[1] + DIR_SPREAD, dir[2] + DIR_SPREAD];
+  return (
+    <VFXEmitter
+      emitter="debris"
+      settings={{
+        ...PARTICLE_SETTINGS,
+        spawnMode: "burst",
+        loop: false,
+        size: [0.2, 0.7],
+        duration: 1,
+        nbParticles: 100,
+        speed: [0.1, 4],
+        directionMin: dirMin,
+        directionMax: dirMax,
+      }}
+    />
+  )
+} 

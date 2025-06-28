@@ -7,12 +7,12 @@ export const DebrisParticles = () => {
       name="debris"
       alphaMap={new TextureLoader().load("debris.png")}
       settings={{
+        intensity: 1,
         nbParticles: 1000,
         gravity: [0, -9.8, 0],
         fadeSize: [0.15, 0],
         fadeAlpha: [0.15, 0],
         renderMode: RenderMode.Billboard,
-        intensity: 2,
         frustumCulled: false,
       }}
     />
@@ -24,14 +24,14 @@ export const SparksParticles = () => {
     <VFXParticles
       name="sparks"
       settings={{
+        intensity: 2,
         nbParticles: 1000,
         gravity: [0, -9.8, 0],
         fadeSize: [0, 0],
         fadeAlpha: [0, 0],
-        renderMode: RenderMode.StretchBillboard,
-        intensity: 2,
-        appearance: AppearanceMode.Circular,
         easeFunction: "easeLinear",
+        renderMode: RenderMode.StretchBillboard,
+        appearance: AppearanceMode.Circular,
         frustumCulled: false,
       }}
     />
@@ -44,12 +44,12 @@ export const FlareParticles = () => {
       name="flare"
       alphaMap={new TextureLoader().load("flare.png")}
       settings={{
+        intensity: 3,
         nbParticles: 1000,
         gravity: [0, 0, 0],
         fadeSize: [1, 1],
         fadeAlpha: [0.2, 0],
         renderMode: RenderMode.Billboard,
-        intensity: 10,
         frustumCulled: false,
       }}
     />

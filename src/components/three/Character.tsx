@@ -10,6 +10,7 @@ import { useFrame } from '@react-three/fiber'
 import { useXRInputSourceState, XRSpace } from '@react-three/xr'
 import { RigidBody, BallCollider, CuboidCollider } from '@react-three/rapier'
 import { SparksEmitter } from './SparksEmitter'
+import { DEBUG } from '@/App'
 
 const UNSET_ROUGHNESS = 1
 const UNSET_THICKNESS = 0
@@ -76,6 +77,7 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
   const { cockpitRef } = useSceneStore()
 
   useEffect(() => { // Add placeholder box to head joint
+    if (!DEBUG) return
     if (nodes.head) {
       const box = new Mesh(
         new BoxGeometry(0.2, 0.4, 0.2),
@@ -142,9 +144,11 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
     ]
 
     ikSolverRef.current = new CCDIKSolver(mesh, ikChain)
-    ikHelperRef.current = new CCDIKHelper(mesh, ikChain, 0.05)
-    ikHelperRef.current.visible = true
-    parentRef.current?.add(ikHelperRef.current)
+    if (DEBUG) {
+      ikHelperRef.current = new CCDIKHelper(mesh, ikChain, 0.05)
+      ikHelperRef.current.visible = true
+      parentRef.current?.add(ikHelperRef.current)
+    }
   }, [nodes, scene])
 
   useEffect(() => { // Set material properties
