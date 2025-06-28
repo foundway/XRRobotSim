@@ -10,6 +10,8 @@ import { MainMenu } from '@/components/ui/MainMenu'
 import { useSceneStore } from '@/store/SceneStore'
 import { DebrisParticles, FlareParticles, SparksParticles } from './Particles'
 
+export const MAX_PHYSICS_SPEED = 10
+
 const Scene = () => {
   const { showGrid, orbitCenter } = useSceneStore()
   const { camera } = useThree()

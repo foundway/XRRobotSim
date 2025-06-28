@@ -11,6 +11,7 @@ import { useXRInputSourceState, XRSpace } from '@react-three/xr'
 import { RigidBody, BallCollider, CuboidCollider } from '@react-three/rapier'
 import { SparksEmitter } from './SparksEmitter'
 import { DEBUG } from '@/App'
+import { MAX_PHYSICS_SPEED } from './Scene'
 
 const UNSET_ROUGHNESS = 1
 const UNSET_THICKNESS = 0
@@ -31,7 +32,7 @@ enum LocomotionCommand {
 interface SparksData {
   id: string
   position: Vector3
-  direction: Vector3
+  velocity: Vector3
 }
 
 export const Character = (props: JSX.IntrinsicElements['group']) => {  
@@ -295,14 +296,17 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
   })
 
   const handleCollision = (event: any) => {
-    if (event.other.rigidBody.userData.isEnemy) {
-      const newSparks: SparksData = {
-        id: `sparks-${Date.now()}-${Math.random()}`,
-        position: new Vector3().copy(event.target.rigidBody.translation()),
-        direction: new Vector3().copy(event.target.rigidBody.linvel())
-      }
-      setSparksInstances(prev => [...prev, newSparks])
+    if (!event.other.rigidBody.userData.isEnemy) return
+    const vel = new Vector3().copy(event.target.rigidBody.linvel())
+    if (vel.length() > MAX_PHYSICS_SPEED) {
+      vel.normalize().multiplyScalar(MAX_PHYSICS_SPEED)
     }
+    const newSparks: SparksData = {
+      id: `sparks-${Date.now()}-${Math.random()}`,
+      position: new Vector3().copy(event.target.rigidBody.translation()),
+      velocity: vel
+    }
+    setSparksInstances(prev => [...prev, newSparks])
   }
 
   return (
@@ -340,7 +344,7 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
         <BallCollider args={[0.2]} />
       </RigidBody>
       {sparksInstances.map((sparks) => (
-        <SparksEmitter key={sparks.id} position={sparks.position} direction={sparks.direction} />
+        <SparksEmitter key={sparks.id} position={sparks.position} velocity={sparks.velocity} />
       ))}
       {rightController?.inputSource?.targetRaySpace && ( // Get controller transform in target ray space. TODO: There might be a better way to do this.
         <XRSpace ref={rightControllerRef} space={rightController.inputSource.targetRaySpace}/>

@@ -1,15 +1,18 @@
 import { useEffect, useState } from 'react'
 import { VFXEmitter } from 'wawa-vfx'
 import { Vector3 } from 'three'
+import { MathUtils } from 'three'
 
-export const SparksEmitter = ({ position, direction }: { position: Vector3, direction: Vector3 }) => {
+const IMPACT_SCALE = 0.5
+const POSITION_SPREAD = 0.2
+const DIRECTION_SPREAD = 0.7 
+const MIN_SPEED = 0.2
+const MAX_SPEED = 10
+const PARTICLE_COUNT_MULTIPLIER = 200
+
+export const SparksEmitter = ({ position, velocity }: { position: Vector3, velocity: Vector3 }) => {
   const [shouldDestroy, setShouldDestroy] = useState(false)
-  const IMPACT_SCALE = 0.7
-  const POSITION_SPREAD = 0.2
-  const DIRECTION_SPREAD = 1
-  const direction_normalized = new Vector3(direction.x, direction.y, direction.z).normalize()
-  const MIN_MAX_SPEED = 4
-  const MIN_SPEED = 0.2
+  const velocity_normalized = new Vector3(velocity.x, velocity.y, velocity.z).normalize()
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -30,13 +33,13 @@ export const SparksEmitter = ({ position, direction }: { position: Vector3, dire
       settings={{
         loop: false,
         duration: 1, 
-        nbParticles: 500, 
+        nbParticles: MathUtils.inverseLerp(MIN_SPEED, MAX_SPEED, velocity.length())*PARTICLE_COUNT_MULTIPLIER,
         spawnMode: "burst", 
         delay: 0, 
         particlesLifetime: [0.1, 1],
 
         size: [0.02, 0.04],
-        speed: [MIN_SPEED, Math.max(MIN_MAX_SPEED, direction.length()*IMPACT_SCALE)],
+        speed: [MIN_SPEED, velocity.length()*IMPACT_SCALE],
 
         startPositionMin: [
           position.x-POSITION_SPREAD, 
@@ -47,13 +50,13 @@ export const SparksEmitter = ({ position, direction }: { position: Vector3, dire
           position.y+POSITION_SPREAD, 
           position.z+POSITION_SPREAD],
         directionMin: [
-          direction_normalized.x-DIRECTION_SPREAD, 
-          direction_normalized.y-DIRECTION_SPREAD, 
-          direction_normalized.z-DIRECTION_SPREAD],
+          velocity_normalized.x-DIRECTION_SPREAD, 
+          velocity_normalized.y-DIRECTION_SPREAD, 
+          velocity_normalized.z-DIRECTION_SPREAD],
         directionMax: [
-          direction_normalized.x+DIRECTION_SPREAD, 
-          direction_normalized.y+DIRECTION_SPREAD, 
-          direction_normalized.z+DIRECTION_SPREAD],
+          velocity_normalized.x+DIRECTION_SPREAD, 
+          velocity_normalized.y+DIRECTION_SPREAD, 
+          velocity_normalized.z+DIRECTION_SPREAD],
 
         colorStart: ["#f09965"],
         colorEnd: ["#ff0303"],

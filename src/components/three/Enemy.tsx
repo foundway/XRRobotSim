@@ -7,13 +7,13 @@ import { Root, Text } from '@react-three/uikit'
 import { SkeletonUtils } from 'three-stdlib'
 import { useAnimationStore } from '@/store/AnimationStore'
 import { DebrisBurstEmitter, DebrisTimeEmitter } from './DebrisEmitter'
+import { MAX_PHYSICS_SPEED } from './Scene'
 
 const MOVE_SPEED = 0.5
 const STUN_DURATION = 1 
 const CHARACTER_HEIGHT = new Vector3(0, 2, 0)
 const DESTROYED_DURATION = 1 
 const FORCE_DAMAGE_MULTIPLIER = 0.5
-const MAX_VEL = 10
 
 enum EnemyState {
   ALIVE,
@@ -50,8 +50,8 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
     setEnemyState(EnemyState.STUNNED);
 
     const vel = new Vector3().copy(event.target.rigidBody.linvel())
-    if (vel.length() > MAX_VEL) {
-      event.target.rigidBody.setLinvel(vel.normalize().multiplyScalar(MAX_VEL), true)
+    if (vel.length() > MAX_PHYSICS_SPEED) {
+      event.target.rigidBody.setLinvel(vel.normalize().multiplyScalar(MAX_PHYSICS_SPEED), true)
     }
 
     stunStartTime.current = Date.now()
