@@ -36,7 +36,6 @@ const Scene = () => {
       <EnemySpawner />
       <SparksParticles />
       <DebrisParticles />
-      <DebrisEmitter />
       {!session && <OrbitControls target={[0, orbitCenter, -3]} />}
       {showGrid && (
         <Grid

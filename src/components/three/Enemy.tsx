@@ -6,12 +6,13 @@ import { RigidBody, RigidBodyProps, useFixedJoint, useRapier, BallCollider } fro
 import { Root, Text } from '@react-three/uikit'
 import { SkeletonUtils } from 'three-stdlib'
 import { useAnimationStore } from '@/store/AnimationStore'
+import { DebrisEmitter } from './DebrisEmitter'
 
 const MOVE_SPEED = 0.5
 const STUN_DURATION = 1 
 const CHARACTER_HEIGHT = new Vector3(0, 2, 0)
 const DESTROYED_DURATION = 1 
-const FORCE_DAMAGE_MULTIPLIER = 0.1
+const FORCE_DAMAGE_MULTIPLIER = 0.5
 
 enum EnemyState {
   ALIVE,
@@ -28,38 +29,15 @@ interface EnemyProps {
 export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {  
   const modelUrl = 'alien-drone.glb'
   const sceneClone = SkeletonUtils.clone(useGLTF(modelUrl).scene)
-  // const headClone = SkeletonUtils.clone(scene.getObjectByName('Head') as Object3D)
-  // const tailClone = SkeletonUtils.clone(scene.getObjectByName('Tail') as Object3D)
-  // const rightHandClone = SkeletonUtils.clone(scene.getObjectByName('RightHand') as Object3D)
-  // const leftHandClone = SkeletonUtils.clone(scene.getObjectByName('LeftHand') as Object3D)
   const group = useRef<Group>(null)
   const headRigidBodyRef = useRef<any>(null)
-  const tailRigidBodyRef = useRef<any>(null)
-  const remainingForce = useRef(new Vector3())
-  const rightHandRigidBodyRef = useRef<any>(null)
-  const leftHandRigidBodyRef = useRef<any>(null)
   const uiGroupRef = useRef<Group>(null)
   const hp = useRef(100)
   const stunStartTime = useRef(0)
   const destroyedStartTime = useRef(0)
   const { characterPosition } = useAnimationStore()
   const [enemyState, setEnemyState] = useState(EnemyState.ALIVE)
-  const { world: rapierWorld } = useRapier();
-
   const ENEMY_ORIGIN = initialPosition || new Vector3(0, 4, -5) // Use provided position or default
-
-  const headTailJoint = useFixedJoint(headRigidBodyRef, tailRigidBodyRef, [
-    [0, 0, 0], [0, 0, 0, 1],
-    [0, 0, 0], [0, 0, 0, 1]
-  ]);
-  const headRightHandJoint = useFixedJoint(headRigidBodyRef, rightHandRigidBodyRef, [
-    [0, 0, 0], [0, 0, 0, 1],
-    [0, 0, 0], [0, 0, 0, 1]
-  ]);
-  const headLeftHandJoint = useFixedJoint(headRigidBodyRef, leftHandRigidBodyRef, [
-    [0, 0, 0], [0, 0, 0, 1],
-    [0, 0, 0], [0, 0, 0, 1]
-  ]);
 
   const handleContactForce = (event: any) => {
     if (!event.other.rigidBodyObject) return;
@@ -77,40 +55,10 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
   }
   
   const destroyed = (force: Vector3) => {
-    if (!headTailJoint.current) return
-
     setEnemyState(EnemyState.DESTROYED)
+    console.log('destroyed')
     destroyedStartTime.current = Date.now()
-
-    // rapierWorld.removeImpulseJoint(headTailJoint.current, true);
-    // rapierWorld.removeImpulseJoint(headRightHandJoint.current, true);
-    // rapierWorld.removeImpulseJoint(headLeftHandJoint.current, true);
-
     headRigidBodyRef.current.setGravityScale(1)
-    // tailRigidBodyRef.current.setGravityScale(1)
-    // rightHandRigidBodyRef.current.setGravityScale(1)
-    // leftHandRigidBodyRef.current.setGravityScale(1)
-
-    const randomVec = () => new Vector3().randomDirection().multiplyScalar(MathUtils.randFloat(0, 0.2));
-    const randomTorque = () => new Vector3().randomDirection().multiplyScalar(MathUtils.randFloat(0, 0.2));
-
-    headRigidBodyRef.current.applyImpulse(randomVec(), true)
-    headRigidBodyRef.current.applyTorqueImpulse(randomTorque(), true)
-
-    // tailRigidBodyRef.current.setLinvel(headRigidBodyRef.current.linvel(), true)
-    // tailRigidBodyRef.current.setAngvel(headRigidBodyRef.current.angvel(), true)
-    // tailRigidBodyRef.current.applyImpulse(randomVec(), true)
-    // tailRigidBodyRef.current.applyTorqueImpulse(randomTorque(), true)
-    
-    // rightHandRigidBodyRef.current.setLinvel(headRigidBodyRef.current.linvel(), true)
-    // rightHandRigidBodyRef.current.setAngvel(headRigidBodyRef.current.angvel(), true)
-    // rightHandRigidBodyRef.current.applyImpulse(randomVec(), true)
-    // rightHandRigidBodyRef.current.applyTorqueImpulse(randomTorque(), true)
-
-    // leftHandRigidBodyRef.current.setLinvel(headRigidBodyRef.current.linvel(), true)
-    // leftHandRigidBodyRef.current.setAngvel(headRigidBodyRef.current.angvel(), true)
-    // leftHandRigidBodyRef.current.applyImpulse(randomVec(), true)
-    // leftHandRigidBodyRef.current.applyTorqueImpulse(randomTorque(), true)
   }
 
   useEffect(() => {
@@ -125,6 +73,7 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
     } else if (enemyState === EnemyState.DESTROYED) {
       const checkDestroyedEnd = () => {
         if (Date.now() - destroyedStartTime.current >= DESTROYED_DURATION * 1000) {
+          console.log('removed')
           setEnemyState(EnemyState.REMOVED)
         }
       }
@@ -197,6 +146,7 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
             userData={{ isEnemy: true, enemyId: id }}
           >
             <BallCollider args={[0.4]} />
+            {(enemyState === EnemyState.DESTROYED || enemyState === EnemyState.STUNNED) && <DebrisEmitter />}
             <primitive object={sceneClone}/>
             <group ref={uiGroupRef}>
               <Root pixelSize={0.01} depthTest={false} depthWrite={false} >

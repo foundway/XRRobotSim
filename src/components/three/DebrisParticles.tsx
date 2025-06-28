@@ -15,10 +15,11 @@ const DebrisParticles = () => {
       settings={{
         nbParticles: 10000, // Maximum number of particles to allocate
         gravity: [0, -9.8, 0], // Apply gravity (x, y, z)
-        fadeSize: [0, 0], // Size fade in/out settings
-        fadeAlpha: [0, 0], // Opacity fade in/out settings
-        renderMode: RenderMode.Mesh, 
+        fadeSize: [0.15, 0], // Size fade in/out settings
+        fadeAlpha: [0.15, 0], // Opacity fade in/out settings
+        renderMode: RenderMode.Billboard, 
         intensity: 2, // Brightness multiplier
+        frustumCulled: false,
       }}
     />
   );

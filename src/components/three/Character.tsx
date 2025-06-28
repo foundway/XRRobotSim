@@ -338,7 +338,6 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
       {sparksInstances.map((sparks) => (
         <SparksEmitter key={sparks.id} position={sparks.position} direction={sparks.direction} />
       ))}
-
       {rightController?.inputSource?.targetRaySpace && ( // Get controller transform in target ray space. TODO: There might be a better way to do this.
         <XRSpace ref={rightControllerRef} space={rightController.inputSource.targetRaySpace}/>
       )}

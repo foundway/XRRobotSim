@@ -6,7 +6,7 @@ import { useGLTF } from '@react-three/drei'
 export const DebrisEmitter = () => {
   const [shouldDestroy, setShouldDestroy] = useState(false)
   const IMPACT_SCALE = 0.7
-  const POSITION_SPREAD = 1
+  const POSITION_SPREAD = 0.2
   const DIRECTION_SPREAD = 1
   const MIN_MAX_SPEED = 4
   const MIN_SPEED = 0.2
@@ -26,27 +26,27 @@ export const DebrisEmitter = () => {
   return (
     <VFXEmitter
       emitter="debris"
-      debug={true}
-      localDirection={true}
       settings={{
         spawnMode: "time",
         delay: 0,
         loop: true,
-        duration: 1,
-        nbParticles: 10,
-        size: [0.5, 1],
-        particlesLifetime: [1, 1],
-        speed: [1, 5],
-        directionMin: [-1, -1, -1],
-        directionMax: [1, 1, 1],
-        rotationSpeedMax: [1, 1, 200],
-        rotationSpeedMin: [-1, -1, -200],
-        startPositionMin: [0, 0, 0],
-        startPositionMax: [0, 0, 0],
-        startRotationMin: [-1, -1, -Math.PI],
-        startRotationMax: [1, 1, Math.PI],
+        duration: 2,
+        nbParticles: 100,
+        size: [0.15, 0.5],
+        particlesLifetime: [0.5, 1],
+        speed: [0, 2],
+        directionMin: [-DIRECTION_SPREAD, -DIRECTION_SPREAD, -DIRECTION_SPREAD],
+        directionMax: [DIRECTION_SPREAD, DIRECTION_SPREAD, DIRECTION_SPREAD],
+        rotationSpeedMin: [-3.14, -3.14, -31.4],
+        rotationSpeedMax: [3.14, 3.14, 31.4],
+        startPositionMin: [-POSITION_SPREAD, -POSITION_SPREAD, -POSITION_SPREAD],
+        startPositionMax: [POSITION_SPREAD, POSITION_SPREAD, POSITION_SPREAD],
+        startRotationMin: [0, 0, -6.28],
+        startRotationMax: [0, 0, 6.28],
+        colorStart: ["#77ff77"],
+        colorEnd: ["#ff1111"],
       }}
     />
   )
 } 
-useGLTF.preload("debris.glb");
+// useGLTF.preload("debris.glb");
