@@ -4,12 +4,8 @@ import { Vector3 } from 'three'
 import { useGLTF } from '@react-three/drei'
 
 export const DebrisEmitter = () => {
-  const [shouldDestroy, setShouldDestroy] = useState(false)
-  const IMPACT_SCALE = 0.7
   const POSITION_SPREAD = 0.2
   const DIRECTION_SPREAD = 1
-  const MIN_MAX_SPEED = 4
-  const MIN_SPEED = 0.2
 
   // useEffect(() => {
   //   const timer = setTimeout(() => {

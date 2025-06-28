@@ -7,6 +7,7 @@ import { Root, Text } from '@react-three/uikit'
 import { SkeletonUtils } from 'three-stdlib'
 import { useAnimationStore } from '@/store/AnimationStore'
 import { DebrisEmitter } from './DebrisEmitter'
+import { FlareEmitter } from './FalreEmitter'
 
 const MOVE_SPEED = 0.5
 const STUN_DURATION = 1 
@@ -46,12 +47,8 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
     const force = new Vector3(event.totalForce.x, event.totalForce.y, event.totalForce.z);
 
     hp.current -= Math.max(0, Math.floor(force.length() * FORCE_DAMAGE_MULTIPLIER));
-    if (hp.current > 0) {
-      setEnemyState(EnemyState.STUNNED);
-      stunStartTime.current = Date.now()
-    } else {
-      destroyed(force);
-    }
+    setEnemyState(EnemyState.STUNNED);
+    stunStartTime.current = Date.now()
   }
   
   const destroyed = (force: Vector3) => {
@@ -65,7 +62,11 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
     if (enemyState === EnemyState.STUNNED) {
       const checkStunEnd = () => {
         if (Date.now() - stunStartTime.current >= STUN_DURATION * 1000) {
-          setEnemyState(EnemyState.ALIVE)
+          if (hp.current <= 0) {
+            destroyed(new Vector3(0, 0, 0))
+          } else {
+            setEnemyState(EnemyState.ALIVE)
+          }
         }
       }
       const interval = setInterval(checkStunEnd, 100)
@@ -147,7 +148,8 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
           >
             <BallCollider args={[0.4]} />
             {(enemyState === EnemyState.DESTROYED || enemyState === EnemyState.STUNNED) && <DebrisEmitter />}
-            <primitive object={sceneClone}/>
+            {enemyState === EnemyState.DESTROYED && <FlareEmitter />}
+            {enemyState !== EnemyState.DESTROYED && <primitive object={sceneClone}/>}
             <group ref={uiGroupRef}>
               <Root pixelSize={0.01} depthTest={false} depthWrite={false} >
                 <Text fontSize={10} color="white">
