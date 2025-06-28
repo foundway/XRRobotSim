@@ -13,7 +13,7 @@ export const EnemySpawner = () => {
   const [enemyCount, setEnemyCount] = useState(0)
   const lastSpawnTime = useRef(0)
   const spawnInterval = 3 // Spawn every 3 seconds
-  const maxEnemies = 10
+  const maxEnemies = 20
   const hasStarted = useRef(false)
   const spawnVolume = { minX: -5, maxX: 5, minY: 2, maxY: 5, minZ: -7, maxZ: -5 }
 
