@@ -10,6 +10,7 @@ import { useModels, AppContextProvider } from './context/AppContext'
 import { BsHeadsetVr } from "react-icons/bs";
 import { MdOutlineFileUpload } from "react-icons/md";
 import XRController from './components/three/XRController'
+import { useSceneStore } from './store/SceneStore'
 
 export const DEBUG = true
 
@@ -111,6 +112,7 @@ const store = createXRStore({
 
 const App = () => {
   const [enemyCount, setEnemyCount] = useState(0)
+  const { paused } = useSceneStore()
 
   // Listen for enemy count updates
   useEffect(() => {
@@ -133,7 +135,7 @@ const App = () => {
           shadows
         >
           <XR store={store}>
-            <Physics debug={DEBUG}>
+            <Physics debug={DEBUG} paused={paused}>
               <Scene />
             </Physics>
           </XR>

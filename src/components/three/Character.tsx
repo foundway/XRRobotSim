@@ -1,4 +1,4 @@
-import { Mesh, BoxGeometry, MeshBasicMaterial, MeshPhysicalMaterial, Vector3, Quaternion, SkinnedMesh, FrontSide, Object3D, Euler} from 'three'
+import { Mesh, BoxGeometry, MeshBasicMaterial, Vector3, Quaternion, SkinnedMesh, Object3D } from 'three'
 import { CCDIKSolver, CCDIKHelper } from 'three/addons/animation/CCDIKSolver.js';
 import { JSX, useEffect, useRef, useState, useMemo } from 'react'
 import { useGLTF, useAnimations } from '@react-three/drei'
@@ -293,6 +293,7 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
     <>
       <group {...props} ref={characterRef} position={characterPosition} rotation={[0, characterOrientation, 0]}>
         <primitive object={scene} scale={scale} userData={{ isCharacter: true }} />
+        <CuboidCollider args={[10, 1, 10]} position={[0, -0.5, 0]}/>
       </group>
       <RigidBody
         ref={bodyRigidBodyRef}

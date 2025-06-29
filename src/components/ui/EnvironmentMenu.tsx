@@ -1,5 +1,5 @@
 import { Container, Text } from '@react-three/uikit'
-import { Button } from '@react-three/uikit-default'
+import { Button, Slider } from '@react-three/uikit-default'
 import { Check } from '@react-three/uikit-lucide'
 import { useSceneStore, Environments } from '@/store/SceneStore'
 import { Separator } from '@/components/ui/Separator'
@@ -9,7 +9,7 @@ export const EnvironmentMenu = () => {
   const { setEnvironment, currentEnvironment, showBackground, toggleBackground, showGrid, toggleGrid } = useSceneStore()
 
   return (
-    <SubMenu title="Environments">
+    <SubMenu title="Scene">
       <Button onClick={toggleBackground} variant="ghost" >
         <Container width={16} />
         <Text width={"100%"}>{showBackground ? 'Hide Background' : 'Show Background'}</Text>

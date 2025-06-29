@@ -11,41 +11,65 @@ const Environments = {
 }
 
 interface SceneState {
-  showBackground: boolean
-  showGrid: boolean
-  currentEnvironment: string
-  orbitCenter: number
-  stageRadius: number
   centeringOffset: THREE.Vector3
+  setCenteringOffset: (offset: THREE.Vector3) => void
+  
+  showBackground: boolean
+  toggleBackground: () => void
+  
+  currentEnvironment: string
+  setEnvironment: (environment: string) => void
+  
+  orbitCenter: number
+  setOrbitCenter: (center: number) => void
+  
+  stageRadius: number
+  setStageRadius: (radius: number) => void
+  
+  showGrid: boolean
+  toggleGrid: () => void
+  
+  globalScale: number
+  setGlobalScale: (scale: number) => void
+
+  paused: boolean
+  setPaused: (paused: boolean) => void
+
   cockpitRef: RefObject<THREE.Object3D | null>
   playerScaleRef: RefObject<THREE.Object3D | null>
   rightControllerRef: RefObject<THREE.Object3D | null>
   leftControllerRef: RefObject<THREE.Object3D | null>
-  setCenteringOffset: (offset: THREE.Vector3) => void
-  toggleBackground: () => void
-  toggleGrid: () => void
-  setEnvironment: (environment: string) => void
-  setOrbitCenter: (center: number) => void
-  setStageRadius: (radius: number) => void
 }
 
 export const useSceneStore = create<SceneState>((set) => ({
   showBackground: true,
-  showGrid: false,
+  toggleBackground: () => set((state) => ({ showBackground: !state.showBackground })),
+
   currentEnvironment: Environments["Minedump"],
-  orbitCenter: 2,
-  stageRadius: 3,
+  setEnvironment: (environment: string) => set({ currentEnvironment: environment }),
+
   centeringOffset: new THREE.Vector3(0, 0, 0),
+  setCenteringOffset: (offset) => set({ centeringOffset: offset }),
+  
+  orbitCenter: 2,
+  setOrbitCenter: (center) => set({ orbitCenter: center }),
+  
+  stageRadius: 3,
+  setStageRadius: (radius) => set({ stageRadius: radius }),
+  
+  showGrid: false,
+  toggleGrid: () => set((state) => ({ showGrid: !state.showGrid })),
+  
+  globalScale: 1,
+  setGlobalScale: (scale) => set({ globalScale: scale }),
+
+  paused: false,
+  setPaused: (paused) => set({ paused }),
+
   cockpitRef: { current: null },
   playerScaleRef: { current: null },
   rightControllerRef: { current: null },
   leftControllerRef: { current: null },
-  setCenteringOffset: (offset) => set({ centeringOffset: offset }),
-  toggleBackground: () => set((state) => ({ showBackground: !state.showBackground })),
-  toggleGrid: () => set((state) => ({ showGrid: !state.showGrid })),
-  setEnvironment: (environment: string) => set({ currentEnvironment: environment }),
-  setOrbitCenter: (center) => set({ orbitCenter: center }),
-  setStageRadius: (radius) => set({ stageRadius: radius }),
 }))
 
 export { Environments } 

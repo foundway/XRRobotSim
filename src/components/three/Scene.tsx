@@ -8,13 +8,13 @@ import { Cockpit } from '@/components/three/Cockpit'
 import { EnemySpawner } from '@/components/three/EnemySpawner'
 import { MainMenu } from '@/components/ui/MainMenu'
 import { useSceneStore } from '@/store/SceneStore'
-import { DebrisParticles, FlareParticles, SparksParticles } from './Particles'
+import { DebrisParticles, SparksParticles } from './Particles'
 
-export const GLOBAL_SCALE = 20
+export const GLOBAL_SCALE = 1
 export const MAX_PHYSICS_SPEED = 10 * GLOBAL_SCALE
 
 const Scene = () => {
-  const { showGrid, orbitCenter, playerScaleRef } = useSceneStore()
+  const { showGrid, orbitCenter, playerScaleRef, globalScale } = useSceneStore()
   const { camera } = useThree()
   const { session } = useXR()
 

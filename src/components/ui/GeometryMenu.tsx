@@ -5,18 +5,19 @@ import { useModelStore } from "../../store/ModelStore"
 import { useThree } from '@react-three/fiber'
 import { SubMenu } from './SubMenu'
 import { Separator } from './Separator'
+import { useSceneStore } from '@/store/SceneStore'
 
 const InputSlider = () => {
-  const { scale, setScale } = useModelStore()
+  const { globalScale, setGlobalScale } = useSceneStore()
   return (
     <Container flexDirection="column" marginTop={0} marginLeft={12} marginRight={12} marginBottom={8}>
       <Text paddingBottom={16} fontWeight="bold" fontSize={10}>Scale</Text>
       <Container alignItems="center" gap={12} paddingRight={12}>
-        <Text width={40} textAlign="left">{scale.toFixed(2)}</Text>
+        <Text width={40} textAlign="left">{globalScale.toFixed(2)}</Text>
         <Slider
-          min={0.1} max={3} step={0.01} width={120} value={scale}
+          min={0.1} max={20} step={0.01} width={120} value={globalScale}
           onValueChange={(value) => {
-            setScale(value)
+            console.log('not implemented')
           }}
         />
       </Container>
