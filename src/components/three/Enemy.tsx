@@ -7,9 +7,8 @@ import { Root, Text } from '@react-three/uikit'
 import { SkeletonUtils } from 'three-stdlib'
 import { useAnimationStore } from '@/store/AnimationStore'
 import { DebrisBurstEmitter, DebrisTimeEmitter } from './DebrisEmitter'
-import { MAX_PHYSICS_SPEED } from './Scene'
+import { MAX_PHYSICS_SPEED, GLOBAL_SCALE } from './Scene'
 
-const MOVE_SPEED = 0.5
 const STUN_DURATION = 1 
 const CHARACTER_HEIGHT = new Vector3(0, 2, 0)
 const DESTROYED_DURATION = 1 
@@ -39,6 +38,7 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
   const { characterPosition } = useAnimationStore()
   const [enemyState, setEnemyState] = useState(EnemyState.ALIVE)
   const ENEMY_ORIGIN = initialPosition || new Vector3(0, 4, -5) // Use provided position or default
+  const MOVE_SPEED = 0.5 * GLOBAL_SCALE
 
   const handleContactForce = (event: any) => {
     if (!event.other.rigidBodyObject.userData?.isCharacterHand) return;

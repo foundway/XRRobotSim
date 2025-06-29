@@ -4,13 +4,12 @@ import { Vector3 } from 'three'
 import { MathUtils } from 'three'
 import { GLOBAL_SCALE } from './Scene'
 
-
 export const SparksEmitter = ({ position, velocity }: { position: Vector3, velocity: Vector3 }) => {
   const [shouldDestroy, setShouldDestroy] = useState(false)
   const velocity_normalized = new Vector3(velocity.x, velocity.y, velocity.z).normalize()
 
   const POSITION_SPREAD = 0.2 * GLOBAL_SCALE
-  const DIRECTION_SPREAD = 0.7 * GLOBAL_SCALE
+  const DIRECTION_SPREAD = 0.7
   const MIN_SPEED = 0.2 * GLOBAL_SCALE
   const MAX_SPEED = 10 * GLOBAL_SCALE
   const IMPACT_SCALE = 0.5
