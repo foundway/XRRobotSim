@@ -306,7 +306,7 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
         name="body"
         type="kinematicPosition"
       >
-        <CuboidCollider args={[0.4, 0.9, 0.4]} />
+        <CuboidCollider args={[0.4, 1.1, 0.4]} />
       </RigidBody>
       <RigidBody 
         ref={rightHandRigidBodyRef}
@@ -364,4 +364,4 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
   )
 }
 
-useGLTF.preload('/kanonenkopf-kampfpanzer-rigged.glb')
+useGLTF.preload('kanonenkopf-kampfpanzer-rigged.glb')

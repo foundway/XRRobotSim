@@ -111,20 +111,7 @@ const store = createXRStore({
 })
 
 const App = () => {
-  const [enemyCount, setEnemyCount] = useState(0)
   const { paused } = useSceneStore()
-
-  // Listen for enemy count updates
-  useEffect(() => {
-    const handleEnemySpawn = (event: CustomEvent) => {
-      setEnemyCount(event.detail.count)
-    }
-
-    window.addEventListener('enemySpawned', handleEnemySpawn as EventListener)
-    return () => {
-      window.removeEventListener('enemySpawned', handleEnemySpawn as EventListener)
-    }
-  }, [])
 
   return (
     <AppContextProvider>
@@ -152,13 +139,6 @@ const App = () => {
             <BsHeadsetVr size={20} />
             Enter XR
           </Button>
-          
-          {/* Enemy Counter UI */}
-          <div 
-            className="absolute top-20 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-5 py-2.5 rounded-full text-base font-sans pointer-events-none"
-          >
-            Enemies: {enemyCount}/5
-          </div>
         </div>
       </div>
     </AppContextProvider>

@@ -175,3 +175,5 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
     </group>
   )
 } 
+
+useGLTF.preload('alien-drone.glb')
