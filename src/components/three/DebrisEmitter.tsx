@@ -1,5 +1,6 @@
 import { RenderMode, VFXEmitter } from 'wawa-vfx'
 import { Vector3 } from 'three';
+import { GLOBAL_SCALE } from './Scene';
 
 const DIR_SPREAD = 10
 const POS_SPREAD = 0.25
@@ -61,7 +62,7 @@ export const DebrisBurstEmitter = ({ velocity }: { velocity: Vector3 }) => {
         ...PARTICLE_SETTINGS,
         spawnMode: "burst",
         loop: false,
-        size: [0.2, 0.7],
+        size: [0.2*GLOBAL_SCALE, 0.7*GLOBAL_SCALE],
         duration: 1,
         nbParticles: 100,
         speed: [0.1, 4],

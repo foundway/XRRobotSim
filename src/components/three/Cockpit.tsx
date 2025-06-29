@@ -14,7 +14,15 @@ const getHorizontalDirectionToCharacter = (cameraPosition: Vector3, characterPos
   return direction
 }
 
-const useCockpitTracking = ( cockpitRef: RefObject<any>, characterPosition: Vector3) => {
+export const Cockpit = () => {
+  const { cockpitRef } = useSceneStore()
+  const parentRef = useRef<any>(null)
+  const rightControllerRef = useRef<any>(null)
+  const leftControllerRef = useRef<any>(null)
+  const characterPosition = new Vector3(0, 0, -3) // Character position from Character component
+  const rightController = useXRInputSourceState('controller', 'right')
+  const leftController = useXRInputSourceState('controller', 'left')
+
   useFrame((state) => {
     if (cockpitRef.current) {
       cockpitRef.current.position.copy(state.camera.position)
@@ -25,21 +33,9 @@ const useCockpitTracking = ( cockpitRef: RefObject<any>, characterPosition: Vect
       cockpitRef.current.rotation.set(0, angleY, 0) // Set rotation only around Y axis
     }
   })
-}
-
-export const Cockpit = () => {
-  const { cockpitRef } = useSceneStore()
-  const parentRef = useRef<any>(null)
-  const rightControllerRef = useRef<any>(null)
-  const leftControllerRef = useRef<any>(null)
-  const characterPosition = new Vector3(0, 0, -3) // Character position from Character component
-  const rightController = useXRInputSourceState('controller', 'right')
-  const leftController = useXRInputSourceState('controller', 'left')
-
-  useCockpitTracking(cockpitRef, characterPosition)
 
   return (
-      <>
+    <>
       <group ref={cockpitRef}>
         <mesh position={[0, 0, 0]}>
           <boxGeometry args={[1, 0, 1]} />

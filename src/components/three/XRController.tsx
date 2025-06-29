@@ -3,6 +3,7 @@ import * as THREE from 'three'
 import { DefaultXRControllerOptions, DefaultXRController, useXRInputSourceState, useXRInputSourceStateContext } from '@react-three/xr'
 import { useFrame } from '@react-three/fiber'
 import { Box } from '@react-three/drei'
+import { useSceneStore } from '@/store/SceneStore'
 import { useAnimationStore } from '@/store/AnimationStore'
 
 const XRController = (props: DefaultXRControllerOptions) => {
@@ -11,8 +12,7 @@ const XRController = (props: DefaultXRControllerOptions) => {
   const { addOrientation: addRotation } = useAnimationStore()
   const DEADZONE = 0.1
   const ROTATION_SPEED = -0.01
-  // const leftAnchor = useRef<THREE.Group>(null)
-  // const rightAnchor = useRef<THREE.Group>(null)
+  const { rightControllerRef, leftControllerRef } = useSceneStore()
 
   useFrame(() => {
     const thumstickState = rightController?.gamepad['xr-standard-thumbstick']
@@ -30,14 +30,16 @@ const XRController = (props: DefaultXRControllerOptions) => {
         teleportPointer={false}
         {...props}
       />
+
       {context?.inputSource.handedness === 'right' && 
-      <group>
+      <group ref={rightControllerRef}>
         <Box args={[0.04, 0.04, 0.04]} position={[0, 0, 0]} rotation={[0, 0, 0]}>
           <meshBasicMaterial color="green" wireframe={true} />
         </Box>
       </group>}
+
       {context?.inputSource.handedness === 'left' && 
-      <group>
+      <group ref={leftControllerRef}>
         <Box args={[0.04, 0.04, 0.04]} position={[0, 0, 0]}>
           <meshBasicMaterial color="red" wireframe={true} />
         </Box>

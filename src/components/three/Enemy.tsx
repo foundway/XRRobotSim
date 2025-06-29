@@ -41,7 +41,6 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
   const ENEMY_ORIGIN = initialPosition || new Vector3(0, 4, -5) // Use provided position or default
 
   const handleContactForce = (event: any) => {
-    if (!event.other.rigidBodyObject) return;
     if (!event.other.rigidBodyObject.userData?.isCharacterHand) return;
 
     const force = new Vector3(event.totalForce.x, event.totalForce.y, event.totalForce.z);
@@ -158,14 +157,18 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
             {enemyState === EnemyState.DESTROYED && (
               <DebrisBurstEmitter velocity={rbdRef.current?.linvel()} />
             )}
-            {enemyState !== EnemyState.DESTROYED && <primitive object={sceneClone}/>}
-            <group ref={uiGroupRef}>
-              <Root pixelSize={0.01} depthTest={false} depthWrite={false} >
-                <Text fontSize={10} color="white">
-                  HP: {hp.current}
-                </Text>
-              </Root>
-            </group>
+            {enemyState !== EnemyState.DESTROYED && (
+              <>
+                <primitive object={sceneClone}/>
+                <group ref={uiGroupRef}>
+                  <Root pixelSize={0.01} depthTest={false} depthWrite={false} >
+                    <Text fontSize={10} color="white">
+                      HP: {hp.current}
+                    </Text>
+                  </Root>
+                </group>
+              </>
+            )}
           </RigidBody>
         </>
       )}

@@ -7,19 +7,16 @@ import { useModelStore } from '@/store/ModelStore'
 import { useAnimationStore } from '@/store/AnimationStore'
 import { useSceneStore } from '@/store/SceneStore'
 import { useFrame } from '@react-three/fiber'
-import { useXRInputSourceState, XRSpace } from '@react-three/xr'
+import { useXRInputSourceState } from '@react-three/xr'
 import { RigidBody, BallCollider, CuboidCollider } from '@react-three/rapier'
 import { SparksEmitter } from './SparksEmitter'
 import { DEBUG } from '@/App'
-import { MAX_PHYSICS_SPEED } from './Scene'
+import { GLOBAL_SCALE, MAX_PHYSICS_SPEED } from './Scene'
 
-const UNSET_ROUGHNESS = 1
-const UNSET_THICKNESS = 0
-const FALLBACK_ROUGHNESS = 0.1 
-const FALLBACK_THICKNESS = 1
 const DEADZONE = 0.3
 const LOCOMOTION_TRANSITION_SECONDS = 0.0
 const VECTOR_UP = new Vector3(0, 1, 0)
+const HAND_LENGTH_MULTIPLIER = 2
 
 enum LocomotionCommand {
   Idle = 'Idle',
@@ -41,14 +38,12 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
   const { characterPosition, characterOrientation, } = useAnimationStore()
 
   const rightController = useXRInputSourceState('controller', 'right')
-  const leftController = useXRInputSourceState('controller', 'left')
   const { currentModel } = useModels()
   const { scene, nodes, animations } = useGLTF(currentModel.url)
   const parentRef = useRef<Object3D>(null)
-  const rightControllerRef = useRef<Object3D | null>(null)
-  const leftControllerRef = useRef<Object3D | null>(null)
   const chestRef = useRef<Object3D | null>(null)
   const characterRef = useRef<Object3D>(null)
+  const { playerScaleRef, rightControllerRef, leftControllerRef } = useSceneStore()
 
   const ikBoneNames = useMemo(() => [
     'shoulderR', 'upper_armR', 'forearmR', 'handR',
@@ -82,7 +77,7 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
     if (nodes.head) {
       const box = new Mesh(
         new BoxGeometry(0.2, 0.4, 0.2),
-        new MeshBasicMaterial({ color: 'blue', wireframe: true })
+        new MeshBasicMaterial({ color: 'green', wireframe: true })
       )
       box.position.set(0, 0.2, 0) // Position slightly above the head
       nodes.head.add(box)
@@ -148,26 +143,11 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
     if (DEBUG) {
       ikHelperRef.current = new CCDIKHelper(mesh, ikChain, 0.05)
       ikHelperRef.current.visible = true
-      parentRef.current?.add(ikHelperRef.current)
+      // parentRef.current?.add(ikHelperRef.current)
+      playerScaleRef.current?.add(ikHelperRef.current)
     }
   }, [nodes, scene])
 
-  useEffect(() => { // Set material properties
-    if (!scene) return
-    scene.traverse((child) => {
-      if (child instanceof Mesh && child.material instanceof MeshPhysicalMaterial && child.material.transmission > 0) {
-        child.material.transparent = false
-        if (child.material.roughness == UNSET_ROUGHNESS) {
-          child.material.roughness = FALLBACK_ROUGHNESS
-        }
-        if (child.material.thickness == UNSET_THICKNESS) {
-          child.material.thickness = FALLBACK_THICKNESS
-        }
-        child.material.side = FrontSide
-      }
-    })
-  }, [scene])
-  
   useEffect(() => {
     actions.Idle?.play()
     setCurrentAction(actions.Idle)
@@ -239,7 +219,7 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
     if (!cockpitRef.current) return
 
     if (chestRef.current) {
-      chestRef.current.position.copy(nodes.chest.getWorldPosition(new Vector3()))
+      chestRef.current.position.copy(nodes.chest.getWorldPosition(new Vector3()).multiplyScalar(1/GLOBAL_SCALE))
       chestRef.current.quaternion.copy(nodes.chest.getWorldQuaternion(new Quaternion()))
     }
 
@@ -251,7 +231,7 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
       const localPos = controllerWorldPos.clone().applyMatrix4(cockpitWorldMatrix)
       const localQuat = controllerWorldQuat.clone().premultiply(cockpitRef.current.getWorldQuaternion(new Quaternion()).invert())
       
-      nodes.ikhandR.position.copy(localPos.multiplyScalar(2))
+      nodes.ikhandR.position.copy(localPos.multiplyScalar(HAND_LENGTH_MULTIPLIER))
       nodes.ikhandR.quaternion.copy(localQuat)
     }
 
@@ -263,7 +243,7 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
       const localPos = controllerWorldPos.clone().applyMatrix4(cockpitWorldMatrix)
       const localQuat = controllerWorldQuat.clone().premultiply(cockpitRef.current.getWorldQuaternion(new Quaternion()).invert())
       
-      nodes.ikhandL.position.copy(localPos.multiplyScalar(2))
+      nodes.ikhandL.position.copy(localPos.multiplyScalar(HAND_LENGTH_MULTIPLIER))
       nodes.ikhandL.quaternion.copy(localQuat)
     }
     ikSolverRef.current?.update()
@@ -346,12 +326,6 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
       {sparksInstances.map((sparks) => (
         <SparksEmitter key={sparks.id} position={sparks.position} velocity={sparks.velocity} />
       ))}
-      {rightController?.inputSource?.targetRaySpace && ( // Get controller transform in target ray space. TODO: There might be a better way to do this.
-        <XRSpace ref={rightControllerRef} space={rightController.inputSource.targetRaySpace}/>
-      )}
-      {leftController?.inputSource?.targetRaySpace && ( // Get controller transform in target ray space. TODO: There might be a better way to do this.
-        <XRSpace ref={leftControllerRef} space={leftController.inputSource.targetRaySpace}/>
-      )}
       <mesh ref={chestRef}>
         <boxGeometry args={[1, 0, 1]} />
         <meshBasicMaterial color="blue" wireframe={true} />

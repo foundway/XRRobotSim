@@ -10,10 +10,11 @@ import { MainMenu } from '@/components/ui/MainMenu'
 import { useSceneStore } from '@/store/SceneStore'
 import { DebrisParticles, FlareParticles, SparksParticles } from './Particles'
 
-export const MAX_PHYSICS_SPEED = 10
+export const GLOBAL_SCALE = 20
+export const MAX_PHYSICS_SPEED = 10 * GLOBAL_SCALE
 
 const Scene = () => {
-  const { showGrid, orbitCenter } = useSceneStore()
+  const { showGrid, orbitCenter, playerScaleRef } = useSceneStore()
   const { camera } = useThree()
   const { session } = useXR()
 
@@ -28,15 +29,12 @@ const Scene = () => {
   return (
     <>
       <color attach="background" args={['#333333']} />
-      <Environment />
-      <Character />
-      <EnemySpawner />
-      <SparksParticles />
-      <DebrisParticles />
-      <FlareParticles />
-      {!session && <OrbitControls target={[0, orbitCenter, -3]} />}
-      {showGrid && (
-        <Grid
+      <group name="global-scale" scale={GLOBAL_SCALE}>
+        <Character />
+        <EnemySpawner />
+        {!session && <OrbitControls target={[0, orbitCenter, -3]} />}
+        {showGrid && (
+          <Grid
           position={[0, 0, 0]}
           args={[20, 20]}
           cellSize={0.5}
@@ -47,13 +45,19 @@ const Scene = () => {
           sectionColor="#944"
           fadeDistance={3}
           renderOrder={-1}
-        />
-      )}
-      <XROrigin position={[0, 0, 0]} >
-        <MainMenu />
-        <Cockpit />
-      </XROrigin>
-      <axesHelper/>
+          />
+        )}
+      </group>
+      <group ref={playerScaleRef} name="player-scale">
+        <Environment />
+        <SparksParticles />
+        <DebrisParticles />
+        <XROrigin position={[0, 0, 0]} >
+          <MainMenu />
+          <Cockpit />
+        </XROrigin>
+        <axesHelper/>
+      </group>
     </>
   )
 }

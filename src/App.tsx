@@ -11,7 +11,7 @@ import { BsHeadsetVr } from "react-icons/bs";
 import { MdOutlineFileUpload } from "react-icons/md";
 import XRController from './components/three/XRController'
 
-export const DEBUG = false
+export const DEBUG = true
 
 const ModelInfoCard = () => {
   const { currentModel } = useModels();

@@ -18,6 +18,9 @@ interface SceneState {
   stageRadius: number
   centeringOffset: THREE.Vector3
   cockpitRef: RefObject<THREE.Object3D | null>
+  playerScaleRef: RefObject<THREE.Object3D | null>
+  rightControllerRef: RefObject<THREE.Object3D | null>
+  leftControllerRef: RefObject<THREE.Object3D | null>
   setCenteringOffset: (offset: THREE.Vector3) => void
   toggleBackground: () => void
   toggleGrid: () => void
@@ -34,6 +37,9 @@ export const useSceneStore = create<SceneState>((set) => ({
   stageRadius: 3,
   centeringOffset: new THREE.Vector3(0, 0, 0),
   cockpitRef: { current: null },
+  playerScaleRef: { current: null },
+  rightControllerRef: { current: null },
+  leftControllerRef: { current: null },
   setCenteringOffset: (offset) => set({ centeringOffset: offset }),
   toggleBackground: () => set((state) => ({ showBackground: !state.showBackground })),
   toggleGrid: () => set((state) => ({ showGrid: !state.showGrid })),
