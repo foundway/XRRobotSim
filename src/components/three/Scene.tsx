@@ -13,7 +13,7 @@ import { DebrisParticles, SparksParticles } from './Particles'
 export const GLOBAL_SCALE = 10
 export const MAX_PHYSICS_SPEED = 10 * GLOBAL_SCALE
 
-const Scene = () => {
+const Scene = ({globalScale}: {globalScale: number}) => {
   const { showGrid, orbitCenter, playerScaleRef, xrOriginRef } = useSceneStore()
   const { camera } = useThree()
   const { session } = useXR()
@@ -29,7 +29,7 @@ const Scene = () => {
   return (
     <>
       <color attach="background" args={['#333333']} />
-      <group name="global-scale" scale={GLOBAL_SCALE}>
+      <group name="global-scale" scale={globalScale}>
         <Character />
         <EnemySpawner />
         {!session && <OrbitControls target={[0, orbitCenter, -3]} />}

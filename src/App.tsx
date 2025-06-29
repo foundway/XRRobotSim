@@ -10,7 +10,7 @@ import { useModels, AppContextProvider } from './context/AppContext'
 import { BsHeadsetVr } from "react-icons/bs";
 import { MdOutlineFileUpload } from "react-icons/md";
 import XRController from './components/three/XRController'
-import { useSceneStore } from './store/SceneStore'
+import { useSceneStore, GameMode } from './store/SceneStore'
 
 export const DEBUG = true
 
@@ -111,7 +111,7 @@ const store = createXRStore({
 })
 
 const App = () => {
-  const { paused } = useSceneStore()
+  const { paused, globalScale, setGlobalScale, gameMode, setGameMode } = useSceneStore()
 
   return (
     <AppContextProvider>
@@ -123,22 +123,54 @@ const App = () => {
         >
           <XR store={store}>
             <Physics debug={DEBUG} paused={paused}>
-              <Scene />
+              <Scene key={gameMode} globalScale={globalScale} />
             </Physics>
           </XR>
         </Canvas>
         <div className="pointer-events-auto">
-          <span className='absolute left-8 top-8 gap-4 flex flex-row '>
-            <ModelSelect />
-            <UploadButton />
+          <span className='absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 gap-12 flex flex-col'>
+            <h1 className='text-white font-bold text-center text-8xl'>
+              XR Robot Simulator
+            </h1>
+            <p className='text-white text-center text-2xl'>
+              Select a mode to start
+            </p>
+            <span
+              className='flex flex-row gap-8'
+            >
+              <Button
+                className="rounded-8px w-80 h-50 cursor-pointer backdrop-blur-lg bg-black/40 hover:bg-black/60 shadow-lg flex flex-col"
+                onClick={() => {
+                  setGameMode(GameMode.TwoMeter)
+                  setGlobalScale(1)
+                  store.enterAR()
+                }}>
+                <p className='text-white text-2xl'>2 Meters</p>
+                <p className='text-white text-sm'>Ground control</p>
+              </Button>
+              <Button
+                className="rounded-8px w-80 h-50 cursor-pointer backdrop-blur-lg bg-black/40 hover:bg-black/60 shadow-lg flex flex-col"
+                onClick={() => {
+                  setGameMode(GameMode.TwentyMeter)
+                  setGlobalScale(10)
+                  store.enterAR()
+                }}>
+                <p className='text-white text-2xl'>20 Meters</p>
+                <p className='text-white text-sm'>Ground control</p>
+              </Button>
+              <Button
+                className="rounded-8px w-80 h-50 cursor-pointer backdrop-blur-lg bg-black/40 hover:bg-black/60 shadow-lg flex flex-col"
+                onClick={() => {
+                  setGameMode(GameMode.TwentyMeterMounted)
+                  setGlobalScale(10)
+                  store.enterAR()
+                }}>
+                <p className='text-white text-2xl'>20 Meters</p>
+                <p className='text-white text-sm'>Mounted control</p>
+              </Button>
+            </span>
           </span>
           <ModelInfoCard />
-          <Button
-            className="absolute top-8 right-8 rounded-full gap-3 p-6 hover:bg-gray-800 cursor-pointer"
-            onClick={() => store.enterAR()}>
-            <BsHeadsetVr size={20} />
-            Enter XR
-          </Button>
         </div>
       </div>
     </AppContextProvider>

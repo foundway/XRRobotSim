@@ -274,11 +274,11 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
     locomotionUpdate()
     ikUpdate()
     RBDUpdate()
-    if (xrOriginRef.current) {
-      xrOriginRef.current.position.copy(nodes.head.getWorldPosition(new Vector3()).add(new Vector3(0, 0, 0)))
-      xrOriginRef.current.quaternion.copy(nodes.head.getWorldQuaternion(new Quaternion()))  
-      xrOriginRef.current.rotateOnAxis(new Vector3(0, 1, 0), Math.PI)
-    }
+    // if (xrOriginRef.current) {
+    //   xrOriginRef.current.position.copy(nodes.head.getWorldPosition(new Vector3()).add(new Vector3(0, 0, 0)))
+    //   xrOriginRef.current.quaternion.copy(nodes.head.getWorldQuaternion(new Quaternion()))  
+    //   xrOriginRef.current.rotateOnAxis(new Vector3(0, 1, 0), Math.PI)
+    // }
   })
 
   const handleCollision = (event: any) => {

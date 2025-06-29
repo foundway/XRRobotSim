@@ -2,6 +2,12 @@ import { create } from 'zustand'
 import * as THREE from 'three'
 import { useRef, RefObject } from 'react'
 
+export enum GameMode {
+  TwoMeter = '2-meter',
+  TwentyMeter = '20-meter',
+  TwentyMeterMounted = '20-meter-mounted'
+}
+
 const Environments = {
   "Minedump": 'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/minedump_flats_2k.hdr',
   "Hanger": 'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/small_hangar_01_2k.hdr',
@@ -35,6 +41,9 @@ interface SceneState {
   paused: boolean
   setPaused: (paused: boolean) => void
 
+  gameMode: GameMode
+  setGameMode: (gameMode: GameMode) => void
+
   cockpitRef: RefObject<THREE.Object3D | null>
   playerScaleRef: RefObject<THREE.Object3D | null>
   xrOriginRef: RefObject<THREE.Group | null>
@@ -66,6 +75,9 @@ export const useSceneStore = create<SceneState>((set) => ({
 
   paused: false,
   setPaused: (paused) => set({ paused }),
+
+  gameMode: GameMode.TwoMeter,
+  setGameMode: (gameMode) => set({ gameMode }),
 
   cockpitRef: { current: null },
   playerScaleRef: { current: null },
