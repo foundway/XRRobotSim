@@ -1,4 +1,4 @@
-import { Mesh, BoxGeometry, MeshBasicMaterial, Vector3, Quaternion, SkinnedMesh, Object3D } from 'three'
+import { Mesh, BoxGeometry, MeshBasicMaterial, Vector3, Quaternion, SkinnedMesh, Object3D, Euler } from 'three'
 import { CCDIKSolver, CCDIKHelper } from 'three/addons/animation/CCDIKSolver.js';
 import { JSX, useEffect, useRef, useState, useMemo } from 'react'
 import { useGLTF, useAnimations } from '@react-three/drei'
@@ -70,7 +70,7 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
   const leftHandRigidBodyRef = useRef<any>(null)
   const bodyRigidBodyRef = useRef<any>(null)
   const { scale } = useModelStore()
-  const { cockpitRef } = useSceneStore()
+  const { cockpitRef, xrOriginRef } = useSceneStore()
 
   useEffect(() => { // Add placeholder box to head joint
     if (!DEBUG) return
@@ -88,6 +88,7 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
     scene.traverse((child) => {
       if (child instanceof SkinnedMesh) {
         skinnedMeshRef.current = child
+        child.frustumCulled = false
       }
     })
     console.log(actions)
@@ -273,6 +274,11 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
     locomotionUpdate()
     ikUpdate()
     RBDUpdate()
+    if (xrOriginRef.current) {
+      xrOriginRef.current.position.copy(nodes.head.getWorldPosition(new Vector3()).add(new Vector3(0, 0, 0)))
+      xrOriginRef.current.quaternion.copy(nodes.head.getWorldQuaternion(new Quaternion()))  
+      xrOriginRef.current.rotateOnAxis(new Vector3(0, 1, 0), Math.PI)
+    }
   })
 
   const handleCollision = (event: any) => {

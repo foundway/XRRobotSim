@@ -37,6 +37,7 @@ interface SceneState {
 
   cockpitRef: RefObject<THREE.Object3D | null>
   playerScaleRef: RefObject<THREE.Object3D | null>
+  xrOriginRef: RefObject<THREE.Group | null>
   rightControllerRef: RefObject<THREE.Object3D | null>
   leftControllerRef: RefObject<THREE.Object3D | null>
 }
@@ -68,6 +69,7 @@ export const useSceneStore = create<SceneState>((set) => ({
 
   cockpitRef: { current: null },
   playerScaleRef: { current: null },
+  xrOriginRef: { current: null },
   rightControllerRef: { current: null },
   leftControllerRef: { current: null },
 }))

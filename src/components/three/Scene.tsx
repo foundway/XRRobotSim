@@ -1,5 +1,5 @@
-import { useEffect } from 'react'
-import { useThree } from '@react-three/fiber'
+import { useEffect, useRef } from 'react'
+import { useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls, Grid } from '@react-three/drei'
 import { useXR, XROrigin } from '@react-three/xr'
 import { Character } from '@/components/three/Character'
@@ -14,7 +14,7 @@ export const GLOBAL_SCALE = 10
 export const MAX_PHYSICS_SPEED = 10 * GLOBAL_SCALE
 
 const Scene = () => {
-  const { showGrid, orbitCenter, playerScaleRef } = useSceneStore()
+  const { showGrid, orbitCenter, playerScaleRef, xrOriginRef } = useSceneStore()
   const { camera } = useThree()
   const { session } = useXR()
 
@@ -52,7 +52,7 @@ const Scene = () => {
         <Environment />
         <SparksParticles />
         <DebrisParticles />
-        <XROrigin position={[0, 0, 0]} >
+        <XROrigin ref={xrOriginRef} position={[0, 0, 0]} >
           <MainMenu />
           <Cockpit />
         </XROrigin>
