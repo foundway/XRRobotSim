@@ -5,13 +5,13 @@ import { useGLTF, useAnimations } from '@react-three/drei'
 import { useModels } from '@/context/AppContext'
 import { useModelStore } from '@/store/ModelStore'
 import { useAnimationStore } from '@/store/AnimationStore'
-import { useSceneStore } from '@/store/SceneStore'
+import { GameMode, useSceneStore } from '@/store/SceneStore'
 import { useFrame } from '@react-three/fiber'
 import { useXRInputSourceState } from '@react-three/xr'
 import { RigidBody, BallCollider, CuboidCollider } from '@react-three/rapier'
 import { SparksEmitter } from './SparksEmitter'
 import { DEBUG } from '@/App'
-import { GLOBAL_SCALE, MAX_PHYSICS_SPEED } from './Scene'
+import { MAX_PHYSICS_SPEED } from './Scene'
 
 const DEADZONE = 0.3
 const LOCOMOTION_TRANSITION_SECONDS = 0.0
@@ -43,7 +43,7 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
   const parentRef = useRef<Object3D>(null)
   const chestRef = useRef<Object3D | null>(null)
   const characterRef = useRef<Object3D>(null)
-  const { playerScaleRef, rightControllerRef, leftControllerRef } = useSceneStore()
+  const { globalScale, playerScaleRef, rightControllerRef, leftControllerRef, gameMode } = useSceneStore()
 
   const ikBoneNames = useMemo(() => [
     'shoulderR', 'upper_armR', 'forearmR', 'handR',
@@ -220,7 +220,7 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
     if (!cockpitRef.current) return
 
     if (chestRef.current) {
-      chestRef.current.position.copy(nodes.chest.getWorldPosition(new Vector3()).multiplyScalar(1/GLOBAL_SCALE))
+      chestRef.current.position.copy(nodes.chest.getWorldPosition(new Vector3()).multiplyScalar(1/globalScale))
       chestRef.current.quaternion.copy(nodes.chest.getWorldQuaternion(new Quaternion()))
     }
 
@@ -274,18 +274,18 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
     locomotionUpdate()
     ikUpdate()
     RBDUpdate()
-    // if (xrOriginRef.current) {
-    //   xrOriginRef.current.position.copy(nodes.head.getWorldPosition(new Vector3()).add(new Vector3(0, 0, 0)))
-    //   xrOriginRef.current.quaternion.copy(nodes.head.getWorldQuaternion(new Quaternion()))  
-    //   xrOriginRef.current.rotateOnAxis(new Vector3(0, 1, 0), Math.PI)
-    // }
+    if (xrOriginRef.current && gameMode == GameMode.TwentyMeterMounted) {
+      xrOriginRef.current.position.copy(nodes.head.getWorldPosition(new Vector3()).add(new Vector3(0, 0, 0)))
+      xrOriginRef.current.quaternion.copy(nodes.head.getWorldQuaternion(new Quaternion()))  
+      xrOriginRef.current.rotateOnAxis(new Vector3(0, 1, 0), Math.PI)
+    }
   })
 
   const handleCollision = (event: any) => {
     if (!event.other.rigidBody.userData.isEnemy) return
     const vel = new Vector3().copy(event.target.rigidBody.linvel())
-    if (vel.length() > MAX_PHYSICS_SPEED) {
-      vel.normalize().multiplyScalar(MAX_PHYSICS_SPEED)
+    if (vel.length() > MAX_PHYSICS_SPEED * globalScale) {
+      vel.normalize().multiplyScalar(MAX_PHYSICS_SPEED * globalScale)
     }
     const newSparks: SparksData = {
       id: `sparks-${Date.now()}-${Math.random()}`,

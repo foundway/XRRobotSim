@@ -3,6 +3,7 @@ import * as THREE from 'three'
 import { useRef, RefObject } from 'react'
 
 export enum GameMode {
+  None = 'none',
   TwoMeter = '2-meter',
   TwentyMeter = '20-meter',
   TwentyMeterMounted = '20-meter-mounted'
@@ -76,7 +77,7 @@ export const useSceneStore = create<SceneState>((set) => ({
   paused: false,
   setPaused: (paused) => set({ paused }),
 
-  gameMode: GameMode.TwoMeter,
+  gameMode: GameMode.None,
   setGameMode: (gameMode) => set({ gameMode }),
 
   cockpitRef: { current: null },

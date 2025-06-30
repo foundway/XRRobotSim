@@ -6,8 +6,9 @@ import { RigidBody, BallCollider } from '@react-three/rapier'
 import { Root, Text } from '@react-three/uikit'
 import { SkeletonUtils } from 'three-stdlib'
 import { useAnimationStore } from '@/store/AnimationStore'
+import { useSceneStore } from '@/store/SceneStore'
 import { DebrisBurstEmitter, DebrisTimeEmitter } from './DebrisEmitter'
-import { MAX_PHYSICS_SPEED, GLOBAL_SCALE } from './Scene'
+import { MAX_PHYSICS_SPEED } from './Scene'
 
 const STUN_DURATION = 1 
 const CHARACTER_HEIGHT = new Vector3(0, 2, 0)
@@ -36,9 +37,11 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
   const stunStartTime = useRef(0)
   const destroyedStartTime = useRef(0)
   const { characterPosition } = useAnimationStore()
+  const { globalScale } = useSceneStore()
   const [enemyState, setEnemyState] = useState(EnemyState.ALIVE)
+
   const ENEMY_ORIGIN = initialPosition || new Vector3(0, 4, -5) // Use provided position or default
-  const MOVE_SPEED = 0.5 * GLOBAL_SCALE
+  const MOVE_SPEED = 0.5 * globalScale
 
   const handleContactForce = (event: any) => {
     if (!event.other.rigidBodyObject.userData?.isCharacterHand) return;
@@ -49,8 +52,8 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
     setEnemyState(EnemyState.STUNNED);
 
     const vel = new Vector3().copy(event.target.rigidBody.linvel())
-    if (vel.length() > MAX_PHYSICS_SPEED) {
-      event.target.rigidBody.setLinvel(vel.normalize().multiplyScalar(MAX_PHYSICS_SPEED), true)
+    if (vel.length() > MAX_PHYSICS_SPEED * globalScale) {
+      event.target.rigidBody.setLinvel(vel.normalize().multiplyScalar(MAX_PHYSICS_SPEED * globalScale), true)
     }
 
     stunStartTime.current = Date.now()

@@ -1,5 +1,5 @@
-import { useEffect, useRef } from 'react'
-import { useFrame, useThree } from '@react-three/fiber'
+import { useEffect } from 'react'
+import { useThree } from '@react-three/fiber'
 import { OrbitControls, Grid } from '@react-three/drei'
 import { useXR, XROrigin } from '@react-three/xr'
 import { Character } from '@/components/three/Character'
@@ -7,14 +7,13 @@ import { Environment } from '@/components/three/Environment'
 import { Cockpit } from '@/components/three/Cockpit'
 import { EnemySpawner } from '@/components/three/EnemySpawner'
 import { MainMenu } from '@/components/ui/MainMenu'
-import { useSceneStore } from '@/store/SceneStore'
+import { GameMode, useSceneStore } from '@/store/SceneStore'
 import { DebrisParticles, SparksParticles } from './Particles'
 
-export const GLOBAL_SCALE = 10
-export const MAX_PHYSICS_SPEED = 10 * GLOBAL_SCALE
+export const MAX_PHYSICS_SPEED = 10
 
 const Scene = ({globalScale}: {globalScale: number}) => {
-  const { showGrid, orbitCenter, playerScaleRef, xrOriginRef } = useSceneStore()
+  const { showGrid, orbitCenter, playerScaleRef, xrOriginRef, gameMode } = useSceneStore()
   const { camera } = useThree()
   const { session } = useXR()
 
@@ -31,7 +30,7 @@ const Scene = ({globalScale}: {globalScale: number}) => {
       <color attach="background" args={['#333333']} />
       <group name="global-scale" scale={globalScale}>
         <Character />
-        <EnemySpawner />
+        {gameMode !== GameMode.None && <EnemySpawner />}
         {!session && <OrbitControls target={[0, orbitCenter, -3]} />}
         {showGrid && (
           <Grid

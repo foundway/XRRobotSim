@@ -10,6 +10,7 @@ import { AnimationMenu } from './AnimationMenu'
 import { GeometryMenu } from './GeometryMenu'
 import { Separator } from './Separator'
 import { useModelStore } from '@/store/ModelStore'
+import { GameMode, useSceneStore } from '@/store/SceneStore'
 
 export const MainMenu = () => {
   const { scene, camera } = useThree()
@@ -19,6 +20,7 @@ export const MainMenu = () => {
   const prevTargetPos = useRef(new Vector3())
   const { setScale } = useModelStore()
   const { isMenuVisible, setMenuVisible } = useModelStore()
+  const { setGameMode } = useSceneStore()
   const ANGLE_THRESHOLD = 30
   const LERP_SPEED = 4 
   const Y_OFFSET = -0.7
@@ -53,6 +55,7 @@ export const MainMenu = () => {
 
   const handleXRClick = () => {
     resetTransformation()
+    setGameMode(GameMode.None)
     session?.end()
   }
 
