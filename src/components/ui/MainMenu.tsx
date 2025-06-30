@@ -20,7 +20,7 @@ export const MainMenu = () => {
   const prevTargetPos = useRef(new Vector3())
   const { setScale } = useModelStore()
   const { isMenuVisible, setMenuVisible } = useModelStore()
-  const { setGameMode } = useSceneStore()
+  const { setGameMode, setGlobalScale } = useSceneStore()
   const ANGLE_THRESHOLD = 30
   const LERP_SPEED = 4 
   const Y_OFFSET = -0.7
@@ -54,23 +54,13 @@ export const MainMenu = () => {
   }
 
   const handleXRClick = () => {
-    resetTransformation()
     setGameMode(GameMode.None)
+    setGlobalScale(1)
     session?.end()
   }
 
   const toggleMenu = () => {
     setMenuVisible(!isMenuVisible)
-  }
-
-  const resetTransformation = () => {
-    setScale(1)
-    scene.traverse((object) => {
-      if (object instanceof Object3D && object.userData.isCharacter) {
-        object.parent?.position.set(0, 0, 0)
-        object.parent?.rotation.set(0, 0, 0)
-      }
-    })
   }
 
   setPreferredColorScheme("dark")

@@ -18,10 +18,8 @@ const Scene = ({globalScale}: {globalScale: number}) => {
   const { session } = useXR()
 
   useEffect(() => {
-    camera.lookAt(0, 2, 3)
-    camera.position.x = 0
-    camera.position.z = 0
-    camera.position.y = 1
+    camera.position.set(-1, 0.5, -6)
+    camera.lookAt(0, 1, 0)
     camera.updateProjectionMatrix()
   }, [camera])
 
@@ -31,19 +29,28 @@ const Scene = ({globalScale}: {globalScale: number}) => {
       <group name="global-scale" scale={globalScale}>
         <Character />
         {gameMode !== GameMode.None && <EnemySpawner />}
-        {!session && <OrbitControls target={[0, orbitCenter, -3]} />}
+        {!session && <OrbitControls 
+          target={[0, 1, -3]} 
+          minPolarAngle={1.8} 
+          maxPolarAngle={1.8}
+          enableZoom={false}
+          enablePan={false}
+          autoRotate={true}
+          rotateSpeed={2}
+          autoRotateSpeed={1}
+        />}
         {showGrid && (
           <Grid
-          position={[0, 0, 0]}
-          args={[20, 20]}
-          cellSize={0.5}
-          cellThickness={1}
-          cellColor="#eee"
-          sectionSize={100}
-          sectionThickness={1}
-          sectionColor="#944"
-          fadeDistance={3}
-          renderOrder={-1}
+            position={[0, 0, 0]}
+            args={[20, 20]}
+            cellSize={0.5}
+            cellThickness={1}
+            cellColor="#eee"
+            sectionSize={100}
+            sectionThickness={1}
+            sectionColor="#944"
+            fadeDistance={3}
+            renderOrder={-1}
           />
         )}
       </group>
