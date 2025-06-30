@@ -50,7 +50,7 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
     'shoulderL', 'upper_armL', 'forearmL', 'handL'
   ], []);
 
-  const animationsWithIKBones = useMemo(() => {
+  const animationsWithoutIKBones = useMemo(() => {
     return animations.map(clip => {
       const newClip = clip.clone();
       newClip.tracks = clip.tracks.filter(track => {
@@ -61,8 +61,8 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
     });
   }, [animations, ikBoneNames]);
 
-  const { actions } = useAnimations(animationsWithIKBones, characterRef)
-  const [currentAction, setCurrentAction] = useState(actions.Idle)
+  const { actions } = useAnimations(gameMode == GameMode.None ? animations : animationsWithoutIKBones, characterRef)
+  const [currentAction, setCurrentAction] = useState(actions.Scan)
   const ikSolverRef = useRef<CCDIKSolver | null>(null)
   const ikHelperRef = useRef<CCDIKHelper | null>(null)
   const skinnedMeshRef = useRef<SkinnedMesh | null>(null)
@@ -91,7 +91,6 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
         child.frustumCulled = false
       }
     })
-    console.log(actions)
   }, [scene])
 
   useEffect(() => { // Set up IK solver
@@ -144,23 +143,27 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
     if (DEBUG) {
       ikHelperRef.current = new CCDIKHelper(mesh, ikChain, 0.05)
       ikHelperRef.current.visible = true
-      // parentRef.current?.add(ikHelperRef.current)
       playerScaleRef.current?.add(ikHelperRef.current)
     }
   }, [nodes, scene])
 
   useEffect(() => {
-    actions.Idle?.play()
-    setCurrentAction(actions.Idle)
+    if (gameMode == GameMode.None) {
+      actions.Scan?.play()
+      setCurrentAction(actions.Scan)
+    } else {
+      actions.Idle?.play()
+      setCurrentAction(actions.Idle)
+    }
     return () => {
       currentAction?.fadeOut(LOCOMOTION_TRANSITION_SECONDS)
     }
-  }, [actions])
+  }, [actions, gameMode])
 
   const lastRootPosition = useRef(nodes.root.position.clone())
   const lastRootOrientation = useRef(characterOrientation)
   const locomotionUpdate = () => {
-    if (!currentAction) {
+    if (!currentAction || gameMode == GameMode.None) {
       return
     }
     const rightStick = rightController?.gamepad['xr-standard-thumbstick']
@@ -247,7 +250,9 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
       nodes.ikhandL.position.copy(localPos.multiplyScalar(HAND_LENGTH_MULTIPLIER))
       nodes.ikhandL.quaternion.copy(localQuat)
     }
-    ikSolverRef.current?.update()
+    if (ikSolverRef.current && gameMode != GameMode.None) {
+      ikSolverRef.current.update()
+    }
   }
   
   const RBDUpdate = () => {
