@@ -156,10 +156,10 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
           >
             <BallCollider args={[0.4]} />
             {enemyState === EnemyState.STUNNED && (
-              <DebrisTimeEmitter velocity={rbdRef.current?.linvel()} />
+              <DebrisTimeEmitter velocity={new Vector3().copy(rbdRef.current?.linvel())} />
             )}
             {enemyState === EnemyState.DESTROYED && (
-              <DebrisBurstEmitter velocity={rbdRef.current?.linvel()} />
+              <DebrisBurstEmitter velocity={new Vector3().copy(rbdRef.current?.linvel())} />
             )}
             {enemyState !== EnemyState.DESTROYED && (
               <>

@@ -9,10 +9,10 @@ export const SparksEmitter = ({ position, velocity }: { position: Vector3, veloc
   const velocity_normalized = new Vector3(velocity.x, velocity.y, velocity.z).normalize()
   const { globalScale } = useSceneStore()
 
-  const POSITION_SPREAD = 0.2 * globalScale
-  const DIRECTION_SPREAD = 0.7
-  const MIN_SPEED = 0.2 * globalScale
-  const MAX_SPEED = 10 * globalScale
+  const POS_SPREAD = 0.2 * Math.pow(globalScale, 0.5)
+  const DIR_SPREAD = 0.6
+  const MIN_SPEED = 0.2 * Math.pow(globalScale, 0.5)
+  const MAX_SPEED = 10 * Math.pow(globalScale, 0.5)
   const IMPACT_SCALE = 0.5
   const PARTICLE_COUNT_MULTIPLIER = 200
 
@@ -39,24 +39,24 @@ export const SparksEmitter = ({ position, velocity }: { position: Vector3, veloc
         spawnMode: "burst", 
         delay: 0, 
         particlesLifetime: [0.1, 1],
-        size: [0.02 * globalScale, 0.04 * globalScale],
+        size: [0.02 * Math.pow(globalScale, 0.5), 0.04 * Math.pow(globalScale, 0.5)],
         speed: [MIN_SPEED, velocity.length()*IMPACT_SCALE],
         startPositionMin: [
-          position.x-POSITION_SPREAD, 
-          position.y-POSITION_SPREAD, 
-          position.z-POSITION_SPREAD],
+          position.x-POS_SPREAD, 
+          position.y-POS_SPREAD, 
+          position.z-POS_SPREAD],
         startPositionMax: [
-          position.x+POSITION_SPREAD, 
-          position.y+POSITION_SPREAD, 
-          position.z+POSITION_SPREAD],
+          position.x+POS_SPREAD, 
+          position.y+POS_SPREAD, 
+          position.z+POS_SPREAD],
         directionMin: [
-          velocity_normalized.x-DIRECTION_SPREAD, 
-          velocity_normalized.y-DIRECTION_SPREAD, 
-          velocity_normalized.z-DIRECTION_SPREAD],
+          velocity_normalized.x-DIR_SPREAD, 
+          velocity_normalized.y-DIR_SPREAD, 
+          velocity_normalized.z-DIR_SPREAD],
         directionMax: [
-          velocity_normalized.x+DIRECTION_SPREAD, 
-          velocity_normalized.y+DIRECTION_SPREAD, 
-          velocity_normalized.z+DIRECTION_SPREAD],
+          velocity_normalized.x+DIR_SPREAD, 
+          velocity_normalized.y+DIR_SPREAD, 
+          velocity_normalized.z+DIR_SPREAD],
         colorStart: ["#f09965"],
         colorEnd: ["#ff0303"],
       }}
