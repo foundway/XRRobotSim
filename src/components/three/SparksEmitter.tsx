@@ -35,14 +35,12 @@ export const SparksEmitter = ({ position, velocity }: { position: Vector3, veloc
       settings={{
         loop: false,
         duration: 1, 
-        nbParticles: MathUtils.inverseLerp(MIN_SPEED, MAX_SPEED, velocity.length())*PARTICLE_COUNT_MULTIPLIER,
+        nbParticles: MathUtils.inverseLerp(MIN_SPEED, MAX_SPEED, velocity.length())*PARTICLE_COUNT_MULTIPLIER * globalScale,
         spawnMode: "burst", 
         delay: 0, 
         particlesLifetime: [0.1, 1],
-
         size: [0.02 * globalScale, 0.04 * globalScale],
         speed: [MIN_SPEED, velocity.length()*IMPACT_SCALE],
-
         startPositionMin: [
           position.x-POSITION_SPREAD, 
           position.y-POSITION_SPREAD, 
@@ -59,7 +57,6 @@ export const SparksEmitter = ({ position, velocity }: { position: Vector3, veloc
           velocity_normalized.x+DIRECTION_SPREAD, 
           velocity_normalized.y+DIRECTION_SPREAD, 
           velocity_normalized.z+DIRECTION_SPREAD],
-
         colorStart: ["#f09965"],
         colorEnd: ["#ff0303"],
       }}

@@ -11,7 +11,6 @@ import { DebrisBurstEmitter, DebrisTimeEmitter } from './DebrisEmitter'
 import { MAX_PHYSICS_SPEED } from './Scene'
 
 const STUN_DURATION = 1 
-const CHARACTER_HEIGHT = new Vector3(0, 2, 0)
 const DESTROYED_DURATION = 1 
 const FORCE_DAMAGE_MULTIPLIER = 0.5
 
@@ -29,25 +28,27 @@ interface EnemyProps {
 
 export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {  
   const modelUrl = 'alien-drone.glb'
+  const { globalScale } = useSceneStore()
   const sceneClone = SkeletonUtils.clone(useGLTF(modelUrl).scene)
   const group = useRef<Group>(null)
   const rbdRef = useRef<any>(null)
   const uiGroupRef = useRef<Group>(null)
-  const hp = useRef(100)
   const stunStartTime = useRef(0)
   const destroyedStartTime = useRef(0)
-  const { characterPosition } = useAnimationStore()
-  const { globalScale } = useSceneStore()
+  const { chestRef } = useAnimationStore()
+  const hp = useRef(100 * globalScale)
   const [enemyState, setEnemyState] = useState(EnemyState.ALIVE)
 
   const ENEMY_ORIGIN = initialPosition || new Vector3(0, 4, -5) // Use provided position or default
-  const MOVE_SPEED = 0.5 * globalScale
+  const MOVE_SPEED = 0.5 
 
   const handleContactForce = (event: any) => {
     if (!event.other.rigidBodyObject.userData?.isCharacterHand) return;
 
     const force = new Vector3(event.totalForce.x, event.totalForce.y, event.totalForce.z);
-    hp.current -= Math.max(0, Math.floor(force.length() * FORCE_DAMAGE_MULTIPLIER));
+    const damage = Math.max(0, Math.floor(force.length() * FORCE_DAMAGE_MULTIPLIER / (globalScale * globalScale)));
+    hp.current -= damage;
+    console.log(force.length(), damage)
 
     setEnemyState(EnemyState.STUNNED);
 
@@ -105,14 +106,15 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
 
   const updateSteering = () => {
     if (enemyState !== EnemyState.ALIVE) return;
+    if (!chestRef.current) return;
     if (!rbdRef.current) return;
 
     const enemyPosition = rbdRef.current.translation();
     const enemyPos = new Vector3(enemyPosition.x, enemyPosition.y, enemyPosition.z)
-    const direction = characterPosition.clone().add(CHARACTER_HEIGHT).sub(enemyPos).normalize()
+    const direction = chestRef.current.getWorldPosition(new Vector3()).sub(enemyPos).normalize()
     
     // Create separate vectors for velocity and rotation to avoid modifying the original direction
-    const velocity = direction.clone().multiplyScalar(MOVE_SPEED)
+    const velocity = direction.clone().multiplyScalar(MOVE_SPEED * globalScale)
     rbdRef.current.setLinvel(velocity, true)
 
     // Make enemy face the character with some smoothing

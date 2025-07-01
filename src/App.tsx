@@ -48,7 +48,7 @@ const GameModeMenu = () => {
   return (
     <div className='bg-black/20 backdrop-blur-md rounded-xl px-12 py-8 text-white absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 gap-6 flex flex-col'>
       <h1 className='text-white font-bold text-center text-6xl text-shadow-lg'>
-        XR Robot Simulator
+        XR Robot Sim
       </h1>
       <p className='text-white text-center text-2xl'>
         Select a mode to start

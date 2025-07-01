@@ -35,13 +35,12 @@ interface SparksData {
 export const Character = (props: JSX.IntrinsicElements['group']) => {  
   const lastCycleTime = useRef(0)
   const [sparksInstances, setSparksInstances] = useState<SparksData[]>([])
-  const { characterPosition, characterOrientation, } = useAnimationStore()
+  const { chestRef, characterPosition, characterOrientation, } = useAnimationStore()
 
   const rightController = useXRInputSourceState('controller', 'right')
   const { currentModel } = useModels()
   const { scene, nodes, animations } = useGLTF(currentModel.url)
   const parentRef = useRef<Object3D>(null)
-  const chestRef = useRef<Object3D | null>(null)
   const characterRef = useRef<Object3D>(null)
   const { globalScale, playerScaleRef, rightControllerRef, leftControllerRef, gameMode } = useSceneStore()
 
@@ -338,11 +337,12 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
       {sparksInstances.map((sparks) => (
         <SparksEmitter key={sparks.id} position={sparks.position} velocity={sparks.velocity} />
       ))}
-      <mesh ref={chestRef}>
-        <boxGeometry args={[1, 0, 1]} />
-        <meshBasicMaterial color="blue" wireframe={true} />
-      </mesh>
-
+      <group ref={chestRef}>
+        {!DEBUG && <mesh >
+          <boxGeometry args={[1, 0, 1]} />
+          <meshBasicMaterial color="blue" wireframe={true} />
+        </mesh>}
+      </group>
       <group ref={parentRef} >
         {/* <axesHelper args={[0.5]} 
           position={nodes['forearmL'].getWorldPosition(new Vector3())} 
