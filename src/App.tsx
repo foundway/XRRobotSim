@@ -7,6 +7,7 @@ import { useModels, AppContextProvider } from './context/AppContext'
 import XRController from './components/three/XRController'
 import { BsHeadsetVr } from "react-icons/bs";
 import { useSceneStore, GameMode } from './store/SceneStore'
+import { Bloom, EffectComposer, Vignette } from '@react-three/postprocessing'
 
 export const DEBUG = true
 
@@ -107,6 +108,12 @@ const App = () => {
               <Scene key={gameMode} globalScale={globalScale}  />
             </Physics>
           </XR>
+          {gameMode === GameMode.None && (
+            <EffectComposer>
+              <Bloom />
+              <Vignette />
+            </EffectComposer>
+          )}
         </Canvas>
         <div className="pointer-events-auto">
           <GameModeMenu />

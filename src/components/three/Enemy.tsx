@@ -48,7 +48,6 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
     const force = new Vector3(event.totalForce.x, event.totalForce.y, event.totalForce.z);
     const damage = Math.max(0, Math.floor(force.length() * FORCE_DAMAGE_MULTIPLIER / (globalScale * globalScale)));
     hp.current -= damage;
-    console.log(force.length(), damage)
 
     setEnemyState(EnemyState.STUNNED);
 
