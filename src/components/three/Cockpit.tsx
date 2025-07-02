@@ -10,6 +10,38 @@ import { DEBUG } from '@/App'
 const CHEST_TO_CAMERA_OFFSET = 0.3
 const HUD_DISTANCE = 1
 
+// Reusable border props
+const BORDER_BASE_PROPS = {
+  width: "100%" as const,
+  positionType: "absolute" as const,
+  positionLeft: 0,
+  positionRight: 0,
+  backgroundOpacity: 0,
+  borderColor: "white" as const,
+  borderLeftWidth: 2,
+  borderRightWidth: 2,
+}
+
+const TOP_BORDER_PROPS = {
+  ...BORDER_BASE_PROPS,
+  height: 100,
+  positionTop: 0,
+  borderTopRadius: 8,
+  borderBottomRadius: 0,
+  borderTopWidth: 2,
+  borderBottomWidth: 0,
+}
+
+const BOTTOM_BORDER_PROPS = {
+  ...BORDER_BASE_PROPS,
+  height: 100,
+  positionBottom: 0,
+  borderTopRadius: 0,
+  borderBottomRadius: 8,
+  borderTopWidth: 0,
+  borderBottomWidth: 2,
+}
+
 const getHorizontalDirectionToCharacter = (cameraPosition: Vector3, characterPosition: Vector3): Vector3 => {
   const direction = new Vector3()
   direction.subVectors(characterPosition, cameraPosition)
@@ -43,9 +75,9 @@ export const Cockpit = () => {
         <group position={[0, CHEST_TO_CAMERA_OFFSET, HUD_DISTANCE]} rotation={[0, Math.PI, 0]}>
           <Root pixelSize={0.001} depthTest={false} depthWrite={false} >
             <Container width={1024} height={768} backgroundOpacity={0} >
-              <Container height={100} width={"100%"} positionType="absolute" positionTop={0} positionLeft={0} positionRight={0} backgroundOpacity={0} borderTopRadius={8} borderBottomRadius={0} borderColor="white" borderTopWidth={2} borderLeftWidth={2} borderRightWidth={2} borderBottomWidth={0} ></Container>
+              <Container {...TOP_BORDER_PROPS} />
               <MainMenu />
-              <Container height={100} width={"100%"} positionType="absolute" positionBottom={0} positionLeft={0} positionRight={0} backgroundOpacity={0} borderTopRadius={0} borderBottomRadius={8} borderColor="white" borderTopWidth={0} borderLeftWidth={2} borderRightWidth={2} borderBottomWidth={2} ></Container>
+              <Container {...BOTTOM_BORDER_PROPS} />
             </Container>
           </Root>
         </group>

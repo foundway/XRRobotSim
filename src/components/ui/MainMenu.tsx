@@ -37,14 +37,18 @@ export const MainMenu = () => {
 
   return (
       <Container 
-        positionBottom={24}
-        positionType={"absolute"}
-        positionLeft={"50%"}
-        positionRight={"50%"}
+        positionBottom={24} positionType={"absolute"} positionLeft={"50%"} positionRight={"50%"}
         flexDirection={"column"} 
         alignItems={"center"} 
       >
-        {isMenuVisible && (<Card positionType="absolute" positionBottom={50} flexDirection="column" alignItems="stretch" backgroundOpacity={0.4} borderColor="white" borderWidth={2} padding={4} >
+        {isMenuVisible && (<Card 
+          positionType="absolute" positionBottom={50} 
+          flexDirection="column" 
+          alignItems="stretch" 
+          backgroundOpacity={0.4} 
+          borderColor="white" borderWidth={2} 
+          padding={4} 
+        >
           <GeometryMenu />
           <AnimationMenu />
           <EnvironmentMenu />
