@@ -10,7 +10,7 @@ export const EnvironmentMenu = () => {
 
   return (
     <SubMenu title="Scene">
-      <Button onClick={toggleBackground} variant="ghost" >
+      <Button onClick={toggleBackground} variant="ghost" hover={{ backgroundOpacity: 0.5 }}>
         <Container width={16} />
         <Text width={"100%"}>{showBackground ? 'Hide Background' : 'Show Background'}</Text>
       </Button>
@@ -19,6 +19,7 @@ export const EnvironmentMenu = () => {
         <Button
           key={name}
           variant="ghost"
+          hover={{ backgroundOpacity: 0.6 }}
           gap={4}
           alignItems="center"
           onClick={() => setEnvironment(url)}
@@ -28,7 +29,7 @@ export const EnvironmentMenu = () => {
         </Button>
       ))}
       <Separator />
-      <Button onClick={toggleGrid} variant="ghost" gap={8}>
+      <Button onClick={toggleGrid} variant="ghost" gap={8} hover={{ backgroundOpacity: 0.5 }}>
         <Container width={16} />
         <Text width={"100%"}>{showGrid ? 'Hide Grid' : 'Show Grid'}</Text>
       </Button>

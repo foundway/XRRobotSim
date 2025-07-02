@@ -59,7 +59,7 @@ const Scene = ({globalScale}: {globalScale: number}) => {
         <SparksParticles />
         <DebrisParticles />
         <XROrigin ref={xrOriginRef} position={[0, 0, 0]} >
-          <MainMenu />
+          {/* <MainMenu /> */}
           <Cockpit />
         </XROrigin>
         <axesHelper/>

@@ -4,8 +4,11 @@ import { Root, Text, Container, setPreferredColorScheme } from '@react-three/uik
 import { Button, Card } from '@react-three/uikit-default'
 import { useSceneStore } from '@/store/SceneStore'
 import { useAnimationStore } from '@/store/AnimationStore'
+import { MainMenu } from '../ui/MainMenu'
+import { DEBUG } from '@/App'
 
 const CHEST_TO_CAMERA_OFFSET = 0.3
+const HUD_DISTANCE = 1
 
 const getHorizontalDirectionToCharacter = (cameraPosition: Vector3, characterPosition: Vector3): Vector3 => {
   const direction = new Vector3()
@@ -33,16 +36,16 @@ export const Cockpit = () => {
   return (
     <>
       <group ref={cockpitRef}>
-        <mesh position={[0, 0, 0]}>
+        {DEBUG && <mesh position={[0, 0, 0]}>
           <boxGeometry args={[1, 0, 1]} />
           <meshBasicMaterial color="blue" wireframe={true} />
-        </mesh>
-        <group position={[0, 0.5, -1]}>
-          <Root>
-            <Container>
-              <Text fontSize={10}>
-                Hello
-              </Text>
+        </mesh>}
+        <group position={[0, CHEST_TO_CAMERA_OFFSET, HUD_DISTANCE]} rotation={[0, Math.PI, 0]}>
+          <Root pixelSize={0.001} depthTest={false} depthWrite={false} >
+            <Container width={1024} height={768} backgroundOpacity={0} >
+              <Container height={100} width={"100%"} positionType="absolute" positionTop={0} positionLeft={0} positionRight={0} backgroundOpacity={0} borderTopRadius={8} borderBottomRadius={0} borderColor="white" borderTopWidth={2} borderLeftWidth={2} borderRightWidth={2} borderBottomWidth={0} ></Container>
+              <MainMenu />
+              <Container height={100} width={"100%"} positionType="absolute" positionBottom={0} positionLeft={0} positionRight={0} backgroundOpacity={0} borderTopRadius={0} borderBottomRadius={8} borderColor="white" borderTopWidth={0} borderLeftWidth={2} borderRightWidth={2} borderBottomWidth={2} ></Container>
             </Container>
           </Root>
         </group>

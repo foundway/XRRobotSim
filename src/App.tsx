@@ -6,6 +6,7 @@ import Scene from '@/components/three/Scene'
 import { useModels, AppContextProvider } from './context/AppContext'
 import XRController from './components/three/XRController'
 import { useSceneStore, GameMode } from './store/SceneStore'
+import { LuMenu } from "react-icons/lu";
 
 export const DEBUG = true
 
@@ -90,6 +91,14 @@ const GameModeMenu = () => {
   )
 }
 
+const SettingsMenu = () => {
+  return (
+    <>
+      <LuMenu className='text-white text-2xl absolute top-12 left-8' />
+    </>
+  )
+}
+
 const App = () => {
   const { paused, globalScale, gameMode } = useSceneStore()
 
@@ -110,6 +119,7 @@ const App = () => {
         <div className="pointer-events-auto">
           <GameModeMenu />
           <ModelInfoCard />
+          <SettingsMenu />
         </div>
       </div>
     </AppContextProvider>

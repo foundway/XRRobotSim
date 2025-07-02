@@ -10,7 +10,7 @@ import { useSceneStore } from '@/store/SceneStore'
 const InputSlider = () => {
   const { globalScale, setGlobalScale } = useSceneStore()
   return (
-    <Container flexDirection="column" marginTop={0} marginLeft={12} marginRight={12} marginBottom={8}>
+    <Container flexDirection="column" marginTop={0} marginLeft={12} marginRight={12} marginBottom={8} >
       <Text paddingBottom={16} fontWeight="bold" fontSize={10}>Scale</Text>
       <Container alignItems="center" gap={12} paddingRight={12}>
         <Text width={40} textAlign="left">{globalScale.toFixed(2)}</Text>
@@ -41,13 +41,13 @@ export const GeometryMenu = () => {
 
   return (
     <SubMenu title="Geometry" cardPadding={12}>
-      <Button variant="ghost">
+      <Button variant="ghost" hover={{ backgroundOpacity: 0.5 }}>
         <Text width="100%">Enable Steering</Text>
       </Button>
       <Separator />
       <InputSlider />
       <Separator />
-      <Button variant="ghost" onClick={resetTransformation}>
+      <Button variant="ghost" onClick={resetTransformation} hover={{ backgroundOpacity: 0.5 }}>
         <Text width={"100%"}>Reset Transformation</Text>
       </Button>
     </SubMenu>

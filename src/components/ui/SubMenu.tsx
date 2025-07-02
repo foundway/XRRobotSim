@@ -34,7 +34,7 @@ export const SubMenu = ({ title, children, cardWidth = 200, cardPadding = 4 }: S
       onPointerEnter={handlePointerEnter}
       onPointerLeave={handlePointerLeave}
     >
-      <Button variant="ghost">
+      <Button variant="ghost" hover={{ backgroundOpacity: 0.6 }}>
         <Text width={"100%"}>{title}</Text>
         <ChevronRight />
       </Button>
@@ -42,10 +42,13 @@ export const SubMenu = ({ title, children, cardWidth = 200, cardPadding = 4 }: S
         {showMenu && (
           <Card 
             positionType="absolute"
-            positionLeft={-8} 
+            positionLeft={0} 
             positionBottom={-8} 
             padding={cardPadding}
             width={cardWidth}
+            backgroundOpacity={0.4}
+            borderColor="white"
+            borderWidth={2}
           >
             {children}
           </Card>
