@@ -50,6 +50,9 @@ interface SceneState {
   xrOriginRef: RefObject<THREE.Group | null>
   rightControllerRef: RefObject<THREE.Object3D | null>
   leftControllerRef: RefObject<THREE.Object3D | null>
+
+  debug: boolean
+  setDebug: (debug: boolean) => void
 }
 
 export const useSceneStore = create<SceneState>((set) => ({
@@ -85,6 +88,9 @@ export const useSceneStore = create<SceneState>((set) => ({
   xrOriginRef: { current: null },
   rightControllerRef: { current: null },
   leftControllerRef: { current: null },
+
+  debug: false,
+  setDebug: (debug) => set({ debug }),
 }))
 
 export { Environments } 

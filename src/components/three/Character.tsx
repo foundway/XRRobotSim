@@ -10,7 +10,6 @@ import { useFrame } from '@react-three/fiber'
 import { useXRInputSourceState } from '@react-three/xr'
 import { RigidBody, BallCollider, CuboidCollider } from '@react-three/rapier'
 import { SparksEmitter } from './SparksEmitter'
-import { DEBUG } from '@/App'
 import { MAX_PHYSICS_SPEED } from './Scene'
 
 const DEADZONE = 0.3
@@ -42,7 +41,7 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
   const { scene, nodes, animations } = useGLTF(currentModel.url)
   const parentRef = useRef<Object3D>(null)
   const characterRef = useRef<Object3D>(null)
-  const { globalScale, playerScaleRef, rightControllerRef, leftControllerRef, gameMode } = useSceneStore()
+  const { globalScale, playerScaleRef, rightControllerRef, leftControllerRef, gameMode, debug } = useSceneStore()
 
   const ikBoneNames = useMemo(() => [
     'shoulderR', 'upper_armR', 'forearmR', 'handR',
@@ -72,7 +71,7 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
   const { cockpitRef, xrOriginRef } = useSceneStore()
 
   useEffect(() => { // Add placeholder box to head joint
-    if (!DEBUG) return
+    if (!debug) return
     if (nodes.head) {
       const box = new Mesh(
         new BoxGeometry(0.2, 0.4, 0.2),
@@ -81,7 +80,7 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
       box.position.set(0, 0.2, 0) // Position slightly above the head
       nodes.head.add(box)
     }
-  }, [nodes.head])
+  }, [nodes.head, debug])
 
   useEffect(() => { // Find the skinned mesh in the model
     scene.traverse((child) => {
@@ -139,12 +138,12 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
     ]
 
     ikSolverRef.current = new CCDIKSolver(mesh, ikChain)
-    if (DEBUG) {
+    if (debug) {
       ikHelperRef.current = new CCDIKHelper(mesh, ikChain, 0.05)
       ikHelperRef.current.visible = true
       playerScaleRef.current?.add(ikHelperRef.current)
     }
-  }, [nodes, scene])
+  }, [nodes, scene, debug])
 
   useEffect(() => {
     if (gameMode == GameMode.None) {
@@ -338,7 +337,7 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
         <SparksEmitter key={sparks.id} position={sparks.position} velocity={sparks.velocity} />
       ))}
       <group ref={chestRef}>
-        {!DEBUG && <mesh >
+        {!debug && <mesh >
           <boxGeometry args={[1, 0, 1]} />
           <meshBasicMaterial color="blue" wireframe={true} />
         </mesh>}

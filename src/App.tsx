@@ -11,14 +11,23 @@ import { LuMenu } from "react-icons/lu";
 import { useState, useRef } from 'react'
 import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing'
 
-export const DEBUG = true
-
 const store = createXRStore({
   controller: XRController,
   bounded: false
 })
 
 const GAME_MODE_BUTTON_CLASS = "rounded-xl w-50 h-20 cursor-pointer backdrop-blur-lg bg-black/30 hover:bg-black/50 shadow-lg flex flex-col"
+
+// Reusable menu item button
+const MenuItemButton = ({ onClick, children }: { onClick: () => void, children: React.ReactNode }) => (
+  <Button 
+    variant="ghost" 
+    className='text-white hover:bg-black/10 hover:text-white cursor-pointer text-left justify-start' 
+    onClick={onClick}
+  >
+    {children}
+  </Button>
+)
 
 const ModelInfoCard = () => {
   const { currentModel } = useModels();
@@ -98,15 +107,22 @@ const GameModeMenu = () => {
 
 const SettingsMenu = () => {
   const [isOpen, setIsOpen] = useState(false)
+  const [menuClickCount, setMenuClickCount] = useState(0)
   const menuRef = useRef<HTMLDivElement>(null)
   const menuTriggerRef = useRef<HTMLButtonElement>(null)
+  const { debug, setDebug } = useSceneStore()
+
+  const handleMenuTriggerClick = () => {
+    setIsOpen(!isOpen)
+    setMenuClickCount((count) => count + 1)
+  }
 
   return (
     <>
       <Button 
         ref={menuTriggerRef} 
         className='absolute top-4 left-4 bg-opacity-0 hover:bg-black/10 hover:backdrop-blur-lg rounded-md p-2 cursor-pointer' 
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={handleMenuTriggerClick}
       >
         <LuMenu className='text-[24px] text-white' />
       </Button>
@@ -117,12 +133,17 @@ const SettingsMenu = () => {
             onClick={() => setIsOpen(false)}
           />
           <div ref={menuRef} className="absolute top-14 left-4 flex flex-col gap-2 bg-black/20 backdrop-blur-md rounded-xl p-4 text-white shadow-xl z-50 border-1 border-white/20">
-            <Button variant="ghost" className='text-white hover:bg-black/10 hover:text-white cursor-pointer text-left justify-start' onClick={() => setIsOpen(false)}>
+            <MenuItemButton onClick={() => setIsOpen(false)}>
               <p>About XR Robot Sim</p>
-            </Button>  
-            <Button variant="ghost" className='text-white hover:bg-black/10 hover:text-white cursor-pointer text-left justify-start' onClick={() => setIsOpen(false)}>
+            </MenuItemButton>
+            <MenuItemButton onClick={() => setIsOpen(false)}>
               <p>License & Attributions</p>
-            </Button>  
+            </MenuItemButton>
+            {menuClickCount >= 10 && (
+              <MenuItemButton onClick={() => { setIsOpen(false); setDebug(!debug); }}>
+                <p>Developing Mode</p>
+              </MenuItemButton>
+            )}
           </div>
         </>
       )}
@@ -131,7 +152,7 @@ const SettingsMenu = () => {
 }
 
 const App = () => {
-  const { paused, globalScale, gameMode } = useSceneStore()
+  const { paused, globalScale, gameMode, debug } = useSceneStore()
 
   return (
     <AppContextProvider>
@@ -142,7 +163,7 @@ const App = () => {
         >
           <PerspectiveCamera key={gameMode} fov={50} makeDefault position={[-1, 0.5, -6]} />
           <XR store={store}>
-            <Physics debug={DEBUG} paused={paused}>
+            <Physics debug={debug} paused={paused}>
               <Scene key={gameMode} globalScale={globalScale}  />
             </Physics>
           </XR>

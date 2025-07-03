@@ -5,7 +5,6 @@ import { Button, Card } from '@react-three/uikit-default'
 import { useSceneStore } from '@/store/SceneStore'
 import { useAnimationStore } from '@/store/AnimationStore'
 import { MainMenu } from '../ui/MainMenu'
-import { DEBUG } from '@/App'
 
 const CHEST_TO_CAMERA_OFFSET = 0.3
 const HUD_DISTANCE = 1
@@ -51,7 +50,7 @@ const getHorizontalDirectionToCharacter = (cameraPosition: Vector3, characterPos
 }
 
 export const Cockpit = () => {
-  const { cockpitRef } = useSceneStore()
+  const { cockpitRef, debug } = useSceneStore()
   const { chestRef } = useAnimationStore()
 
   useFrame((state) => {
@@ -68,7 +67,7 @@ export const Cockpit = () => {
   return (
     <>
       <group ref={cockpitRef}>
-        {DEBUG && <mesh position={[0, 0, 0]}>
+        {debug && <mesh position={[0, 0, 0]}>
           <boxGeometry args={[1, 0, 1]} />
           <meshBasicMaterial color="blue" wireframe={true} />
         </mesh>}
