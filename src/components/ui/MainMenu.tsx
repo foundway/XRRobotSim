@@ -9,6 +9,7 @@ import { GeometryMenu } from './GeometryMenu'
 import { Separator } from './Separator'
 import { useModelStore } from '@/store/ModelStore'
 import { GameMode, useSceneStore } from '@/store/SceneStore'
+import { useThree } from '@react-three/fiber'
 
 export const MainMenu = () => {
   const { session } = useXR()

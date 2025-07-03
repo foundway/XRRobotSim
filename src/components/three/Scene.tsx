@@ -13,15 +13,8 @@ import { DebrisParticles, SparksParticles } from './Particles'
 export const MAX_PHYSICS_SPEED = 10
 
 const Scene = ({globalScale}: {globalScale: number}) => {
-  const { showGrid, orbitCenter, playerScaleRef, xrOriginRef, gameMode } = useSceneStore()
-  const { camera } = useThree()
+  const { showGrid, playerScaleRef, xrOriginRef, gameMode } = useSceneStore()
   const { session } = useXR()
-
-  useEffect(() => {
-    camera.position.set(-1, 0.5, -6)
-    camera.lookAt(0, 1, 0)
-    camera.updateProjectionMatrix()
-  }, [camera])
 
   return (
     <>
@@ -58,11 +51,12 @@ const Scene = ({globalScale}: {globalScale: number}) => {
         <Environment />
         <SparksParticles />
         <DebrisParticles />
-        <XROrigin ref={xrOriginRef} position={[0, 0, 0]} >
-          {/* <MainMenu /> */}
-          <Cockpit />
-        </XROrigin>
         <axesHelper/>
+        {gameMode !== GameMode.None && (
+          <XROrigin ref={xrOriginRef} position={[0, 0, 0]} >
+            <Cockpit />
+          </XROrigin>
+        )}
       </group>
     </>
   )
