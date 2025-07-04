@@ -272,9 +272,6 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
   const handleCollision = (event: any) => {
     if (!event.other.rigidBody.userData.isEnemy) return
     const vel = new Vector3().copy(event.target.rigidBody.linvel())
-    if (vel.length() > MAX_PHYSICS_SPEED * globalScale) {
-      vel.normalize().multiplyScalar(MAX_PHYSICS_SPEED * globalScale)
-    }
     const newSparks: SparksData = {
       id: `sparks-${Date.now()}-${Math.random()}`,
       position: new Vector3().copy(event.target.rigidBody.translation()),
@@ -294,7 +291,7 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
     <>
       <group {...props} ref={characterRef} position={characterPosition} rotation={[0, characterOrientation, 0]}>
         <primitive object={scene} scale={scale} userData={{ isCharacter: true }} />
-        <CuboidCollider args={[10, 1, 10]} position={[0, -0.5, 0]}/>
+        <CuboidCollider args={[100, 1, 100]} position={[0, -0.5, 0]}/>
       </group>
       <RigidBody
         ref={bodyRigidBodyRef}

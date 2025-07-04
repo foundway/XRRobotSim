@@ -4,8 +4,6 @@ import { Container, Text, setPreferredColorScheme } from '@react-three/uikit'
 import { Button, Card } from '@react-three/uikit-default'
 import { Menu as MenuIcon, ChevronDown } from '@react-three/uikit-lucide'
 import { EnvironmentMenu } from './EnvironmentMenu'
-import { AnimationMenu } from './AnimationMenu'
-import { GeometryMenu } from './GeometryMenu'
 import { Separator } from './Separator'
 import { useModelStore } from '@/store/ModelStore'
 import { GameMode, useSceneStore } from '@/store/SceneStore'
@@ -13,7 +11,7 @@ import { GameMode, useSceneStore } from '@/store/SceneStore'
 export const MainMenu = () => {
   const { session } = useXR()
   const { isMenuVisible, setMenuVisible } = useModelStore()
-  const { setGameMode, setGlobalScale } = useSceneStore()
+  const { showBackground, toggleBackground, setGameMode, setGlobalScale } = useSceneStore()
 
   useEffect(() => {
     if (session) {
@@ -22,6 +20,7 @@ export const MainMenu = () => {
   }, [session, setMenuVisible])
 
   const handleXRClick = () => {
+    if(!showBackground) toggleBackground()
     setGameMode(GameMode.None)
     setGlobalScale(1)
     session?.end()
@@ -57,7 +56,7 @@ export const MainMenu = () => {
             <Text width={"100%"}>Exit XR</Text>
           </Button>
         </Card>)}
-        <Button onClick={toggleMenu} variant="secondary" size="icon" borderColor="white" borderRadius={100} borderWidth={2} backgroundOpacity={0.4} hover={{ backgroundOpacity: 0.5 }}>
+        <Button onClick={toggleMenu} variant="secondary" size="icon" borderColor="white" borderRadius={100} borderWidth={1} backgroundOpacity={0.4} hover={{ backgroundOpacity: 0.5 }}>
           {isMenuVisible ? <ChevronDown /> : <MenuIcon />}
         </Button>
       </Container>

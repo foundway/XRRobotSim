@@ -1,5 +1,5 @@
 import { OrbitControls, Grid } from '@react-three/drei'
-import { useXR, XROrigin } from '@react-three/xr'
+import { XROrigin } from '@react-three/xr'
 import { Character } from '@/components/three/Character'
 import { Environment } from '@/components/three/Environment'
 import { Cockpit } from '@/components/three/Cockpit'
@@ -11,15 +11,14 @@ export const MAX_PHYSICS_SPEED = 10
 
 const Scene = ({globalScale}: {globalScale: number}) => {
   const { debug, playerScaleRef, xrOriginRef, gameMode } = useSceneStore()
-  const { session } = useXR()
 
   return (
     <>
       <color attach="background" args={['#333333']} />
       <group name="global-scale" scale={globalScale}>
         <Character />
-        {gameMode !== GameMode.None && <EnemySpawner />}
-        {!session && <OrbitControls 
+        {gameMode !== GameMode.None && <EnemySpawner key={gameMode} />}
+        {gameMode === GameMode.None && <OrbitControls 
           target={[0, 1, -3]} 
           minPolarAngle={1.8} 
           maxPolarAngle={1.8}

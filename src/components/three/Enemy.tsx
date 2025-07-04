@@ -3,7 +3,7 @@ import { useEffect, useRef, useState} from 'react'
 import { useGLTF } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import { RigidBody, BallCollider } from '@react-three/rapier'
-import { Root, Text } from '@react-three/uikit'
+import { Container, Root, Text } from '@react-three/uikit'
 import { SkeletonUtils } from 'three-stdlib'
 import { useAnimationStore } from '@/store/AnimationStore'
 import { useSceneStore } from '@/store/SceneStore'
@@ -28,9 +28,39 @@ interface EnemyProps {
   id?: string
 }
 
+const TOP_BORDER_PROPS = {
+  positionType: "absolute" as const,
+  width: "100%" as const,
+  height: 20,
+  positionTop: 0,
+  positionLeft: 0,
+  positionRight: 0,
+  backgroundOpacity: 0,
+  borderColor: "white" as const,
+  borderLeftWidth: 1,
+  borderRightWidth: 1,
+  borderTopWidth: 1,
+  borderBottomWidth: 0,
+}
+
+const BOTTOM_BORDER_PROPS = {
+  positionType: "absolute" as const,
+  width: "100%" as const,
+  height: 20,
+  positionBottom: 0,
+  positionLeft: 0,
+  positionRight: 0,
+  backgroundOpacity: 0,
+  borderColor: "white" as const,
+  borderLeftWidth: 1,
+  borderRightWidth: 1,
+  borderTopWidth: 0,
+  borderBottomWidth: 1,
+}
+
 export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {  
   const modelUrl = 'alien-drone.glb'
-  const { enemyCount, setEnemyCount, globalScale } = useSceneStore()
+  const { enemyCount, setEnemyCount, globalScale, debug } = useSceneStore()
   const sceneClone = SkeletonUtils.clone(useGLTF(modelUrl).scene)
   const group = useRef<Group>(null)
   const rbdRef = useRef<any>(null)
@@ -38,7 +68,7 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
   const stunStartTime = useRef(0)
   const destroyedStartTime = useRef(0)
   const { chestRef } = useAnimationStore()
-  const hp = useRef(100 * globalScale)
+  const hp = useRef(100)
   const [enemyState, setEnemyState] = useState(EnemyState.ALIVE)
 
   const ENEMY_ORIGIN = initialPosition || new Vector3(0, 4, -5) // Use provided position or default
@@ -47,7 +77,7 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
     if (!event.other.rigidBodyObject.userData?.isCharacterHand) return;
 
     const force = new Vector3(event.totalForce.x, event.totalForce.y, event.totalForce.z);
-    const damage = Math.max(0, Math.floor(force.length() * FORCE_DAMAGE_MULTIPLIER / (globalScale * globalScale)));
+    const damage = Math.max(0, Math.floor(force.length() * FORCE_DAMAGE_MULTIPLIER / Math.pow(globalScale, 4)));
     hp.current -= damage;
 
     setEnemyState(EnemyState.STUNNED);
@@ -81,7 +111,6 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
     } else if (enemyState === EnemyState.DESTROYED) {
       const checkDestroyedEnd = () => {
         if (Date.now() - destroyedStartTime.current >= DESTROYED_DURATION * 1000) {
-          console.log('Removed enemy id: ', id)
           setEnemyCount(enemyCount - 1)
           setEnemyState(EnemyState.REMOVED)
         }
@@ -106,8 +135,7 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
 
   const updateSteering = () => {
     if (enemyState !== EnemyState.ALIVE) return;
-    if (!chestRef.current) return;
-    if (!rbdRef.current) return;
+    if (!chestRef.current || !rbdRef.current) return;
 
     const position = new Vector3().copy(rbdRef.current.translation())
     const characterDir = chestRef.current.getWorldPosition(new Vector3()).sub(position).normalize()
@@ -161,9 +189,13 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
             <primitive object={sceneClone}/>
             <group ref={uiGroupRef}>
               <Root pixelSize={0.01} depthTest={false} depthWrite={false} >
-                <Text fontSize={10} color="white">
+                <Container width={80} height={80} backgroundOpacity={0} >
+                <Container width={hp.current/100 * 40} height={4} backgroundColor={"red"} positionType={"absolute"} positionTop={0} positionLeft={20}/>
+                <Container width={40} height={1} backgroundColor={"red"} positionType={"absolute"} positionTop={4} positionLeft={20}/>
+                {debug && <Text fontSize={10} color="white">
                   HP: {hp.current}
-                </Text>
+                </Text>}
+                </Container>
               </Root>
             </group>
           </>

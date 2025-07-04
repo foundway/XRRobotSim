@@ -26,7 +26,7 @@ const createParticleSettings = (globalScale: number, dir: Vector3) => ({
 }); 
 
 export const DebrisTimeEmitter = ({ velocity }: { velocity: Vector3 }) => {
-  const { globalScale } = useSceneStore()
+  const { globalScale, globalScaleSqrt } = useSceneStore()
   return (
     <VFXEmitter
       emitter="debris"
@@ -36,7 +36,7 @@ export const DebrisTimeEmitter = ({ velocity }: { velocity: Vector3 }) => {
         loop: true,
         size: [0.15 * globalScale, 0.5 * globalScale],
         duration: 1,
-        nbParticles: 30 * globalScale,
+        nbParticles: 30 * globalScaleSqrt,
         speed: [0.1 * globalScale, 1 * globalScale],
       }}
     />

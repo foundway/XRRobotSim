@@ -1,7 +1,6 @@
 import { Vector3 } from 'three'
 import { useFrame } from '@react-three/fiber'
 import { Root, Text, Container, setPreferredColorScheme } from '@react-three/uikit'
-import { Button, Card } from '@react-three/uikit-default'
 import { useSceneStore } from '@/store/SceneStore'
 import { useAnimationStore } from '@/store/AnimationStore'
 import { MainMenu } from '../ui/MainMenu'
@@ -9,9 +8,9 @@ import { MainMenu } from '../ui/MainMenu'
 const CHEST_TO_CAMERA_OFFSET = 0.3
 const HUD_DISTANCE = 1
 
-// Reusable border props
-const BORDER_BASE_PROPS = {
+const BOTTOM_BORDER_PROPS = {
   width: "100%" as const,
+  height: 256,
   positionType: "absolute" as const,
   positionLeft: 0,
   positionRight: 0,
@@ -19,21 +18,6 @@ const BORDER_BASE_PROPS = {
   borderColor: "white" as const,
   borderLeftWidth: 2,
   borderRightWidth: 2,
-}
-
-const TOP_BORDER_PROPS = {
-  ...BORDER_BASE_PROPS,
-  height: 100,
-  positionTop: 0,
-  borderTopRadius: 8,
-  borderBottomRadius: 0,
-  borderTopWidth: 2,
-  borderBottomWidth: 0,
-}
-
-const BOTTOM_BORDER_PROPS = {
-  ...BORDER_BASE_PROPS,
-  height: 100,
   positionBottom: 0,
   borderTopRadius: 0,
   borderBottomRadius: 8,
@@ -74,7 +58,6 @@ export const Cockpit = () => {
         <group position={[0, CHEST_TO_CAMERA_OFFSET, HUD_DISTANCE]} rotation={[0, Math.PI, 0]}>
           <Root pixelSize={0.001} depthTest={false} depthWrite={false} >
             <Container width={1024} height={768} backgroundOpacity={0} >
-              <Container {...TOP_BORDER_PROPS} />
               <MainMenu />
               <Container {...BOTTOM_BORDER_PROPS} />
             </Container>

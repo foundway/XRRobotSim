@@ -37,6 +37,8 @@ interface SceneState {
   toggleGrid: () => void
   
   globalScale: number
+  globalScaleSqrt: number
+  globalScaleFourth: number
   setGlobalScale: (scale: number) => void
 
   paused: boolean
@@ -81,7 +83,13 @@ export const useSceneStore = create<SceneState>((set) => ({
   toggleGrid: () => set((state) => ({ showGrid: !state.showGrid })),
   
   globalScale: 1,
-  setGlobalScale: (scale) => set({ globalScale: scale }),
+  globalScaleSqrt: 1,
+  globalScaleFourth: 1,
+  setGlobalScale: (scale) => set({ 
+    globalScale: scale, 
+    globalScaleSqrt: Math.sqrt(scale), 
+    globalScaleFourth: Math.pow(scale, 4) 
+  }),
 
   paused: false,
   setPaused: (paused) => set({ paused }),
