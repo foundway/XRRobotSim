@@ -162,6 +162,7 @@ const App = () => {
           shadows 
           camera={{ fov: cameraFOV, position: [-1, 0.5, -6] }} 
         >
+          {/* TODO: Find a solution to reset camera FOV when exiting XR */}
           {/* {gameMode === GameMode.None && <PerspectiveCamera makeDefault fov={50} position={[-1, 0.5, -6]} />} */}
           <XR store={store}>
             <Physics debug={debug} paused={paused}>
