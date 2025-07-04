@@ -37,21 +37,3 @@ export const SparksParticles = () => {
     />
   );
 }; 
-
-export const FlareParticles = () => {
-  return (
-    <VFXParticles
-      name="flare"
-      alphaMap={new TextureLoader().load("flare.png")}
-      settings={{
-        intensity: 3,
-        nbParticles: 1000,
-        gravity: [0, 0, 0],
-        fadeSize: [1, 1],
-        fadeAlpha: [0.2, 0],
-        renderMode: RenderMode.Billboard,
-        frustumCulled: false,
-      }}
-    />
-  );
-}; 

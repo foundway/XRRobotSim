@@ -1,4 +1,4 @@
-import { Mesh, BoxGeometry, MeshBasicMaterial, Vector3, Quaternion, SkinnedMesh, Object3D, Euler } from 'three'
+import { Vector3, Quaternion, SkinnedMesh, Object3D } from 'three'
 import { CCDIKSolver, CCDIKHelper } from 'three/addons/animation/CCDIKSolver.js';
 import { JSX, useEffect, useRef, useState, useMemo } from 'react'
 import { useGLTF, useAnimations } from '@react-three/drei'
@@ -70,18 +70,6 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
   const { scale } = useModelStore()
   const { cockpitRef, xrOriginRef } = useSceneStore()
 
-  useEffect(() => { // Add placeholder box to head joint
-    if (!debug) return
-    if (nodes.head) {
-      const box = new Mesh(
-        new BoxGeometry(0.2, 0.4, 0.2),
-        new MeshBasicMaterial({ color: 'green', wireframe: true })
-      )
-      box.position.set(0, 0.2, 0) // Position slightly above the head
-      nodes.head.add(box)
-    }
-  }, [nodes.head, debug])
-
   useEffect(() => { // Find the skinned mesh in the model
     scene.traverse((child) => {
       if (child instanceof SkinnedMesh) {
@@ -134,12 +122,17 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
         ],
       }
     ]
-
     ikSolverRef.current = new CCDIKSolver(mesh, ikChain)
-    if (debug) {
-      ikHelperRef.current = new CCDIKHelper(mesh, ikChain, 0.05)
-      ikHelperRef.current.visible = true
-      playerScaleRef.current?.add(ikHelperRef.current)
+    ikHelperRef.current = new CCDIKHelper(mesh, ikChain, 0.05)
+    playerScaleRef.current?.add(ikHelperRef.current)
+    ikHelperRef.current.visible = debug
+
+    return () => {
+      if (ikHelperRef.current && playerScaleRef.current) {
+        playerScaleRef.current.remove(ikHelperRef.current)
+      }
+      ikSolverRef.current = null
+      ikHelperRef.current = null
     }
   }, [nodes, scene, debug])
 
