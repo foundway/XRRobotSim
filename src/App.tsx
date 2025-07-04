@@ -1,5 +1,4 @@
 import { Canvas } from '@react-three/fiber'
-import { PerspectiveCamera } from '@react-three/drei' 
 import { XR, createXRStore } from '@react-three/xr'
 import { Physics } from '@react-three/rapier'
 import { Button } from '@/components/ui/button'
@@ -8,8 +7,12 @@ import { useModels, AppContextProvider } from './context/AppContext'
 import XRController from './components/three/XRController'
 import { useSceneStore, GameMode } from './store/SceneStore'
 import { LuMenu } from "react-icons/lu";
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing'
+import { useThree } from '@react-three/fiber'
+import { PerspectiveCamera } from 'three'
+
+const DEFAULT_CAMERA_FOV = 50
 
 const store = createXRStore({
   controller: XRController,
@@ -151,8 +154,22 @@ const SettingsMenu = () => {
   )
 }
 
+const CameraFOVSetter = () => {
+  const { gameMode } = useSceneStore()
+  const { camera } = useThree()
+
+  useEffect(() => {
+    if (gameMode === GameMode.None) {
+      (camera as PerspectiveCamera).fov = DEFAULT_CAMERA_FOV
+      camera.updateProjectionMatrix() 
+    }
+  }, [gameMode])
+
+  return null
+}
+
 const App = () => {
-  const { paused, globalScale, gameMode, debug, cameraFOV } = useSceneStore()
+  const { paused, globalScale, gameMode, debug } = useSceneStore()
 
   return (
     <AppContextProvider>
@@ -160,10 +177,9 @@ const App = () => {
         <Canvas 
           className="pointer-events-none" 
           shadows 
-          camera={{ fov: cameraFOV, position: [-1, 0.5, -6] }} 
+          camera={{ fov: DEFAULT_CAMERA_FOV, position: [-1, 0.5, -6] }} 
         >
-          {/* TODO: Find a solution to reset camera FOV when exiting XR */}
-          {/* {gameMode === GameMode.None && <PerspectiveCamera makeDefault fov={50} position={[-1, 0.5, -6]} />} */}
+          <CameraFOVSetter />
           <XR store={store}>
             <Physics debug={debug} paused={paused}>
               <Scene key={gameMode} globalScale={globalScale}  />
@@ -178,7 +194,7 @@ const App = () => {
         </Canvas>
         <div className="pointer-events-auto">
           <GameModeMenu />
-          <ModelInfoCard />
+          {/* <ModelInfoCard /> */}
           <SettingsMenu />
         </div>
       </div>

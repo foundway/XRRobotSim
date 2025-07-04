@@ -271,7 +271,7 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
 
   const xrOriginUpdate = () => {
     if (!xrOriginRef.current || gameMode !== GameMode.TwentyMeterMounted) return
-    xrOriginRef.current.position.copy(nodes.head.getWorldPosition(new Vector3()).add(new Vector3(0, 0, 0)))
+    xrOriginRef.current.position.copy(nodes.head.getWorldPosition(new Vector3(0, 0, -0.1)))
     xrOriginRef.current.quaternion.copy(nodes.head.getWorldQuaternion(new Quaternion()))  
     xrOriginRef.current.rotateOnAxis(new Vector3(0, 1, 0), Math.PI)
   }
@@ -362,6 +362,7 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
           position={nodes['shoulderR'].getWorldPosition(new Vector3())} 
           quaternion={nodes['shoulderR'].getWorldQuaternion(new Quaternion())} 
         /> */}
+        {debug && <axesHelper/>}
       </group>
     </>
   )

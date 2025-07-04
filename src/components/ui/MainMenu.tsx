@@ -1,6 +1,6 @@
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 import { useXR } from '@react-three/xr'
-import { Container, Root, Text, setPreferredColorScheme } from '@react-three/uikit'
+import { Container, Text, setPreferredColorScheme } from '@react-three/uikit'
 import { Button, Card } from '@react-three/uikit-default'
 import { Menu as MenuIcon, ChevronDown } from '@react-three/uikit-lucide'
 import { EnvironmentMenu } from './EnvironmentMenu'
@@ -9,14 +9,11 @@ import { GeometryMenu } from './GeometryMenu'
 import { Separator } from './Separator'
 import { useModelStore } from '@/store/ModelStore'
 import { GameMode, useSceneStore } from '@/store/SceneStore'
-import { useThree } from '@react-three/fiber'
-import { PerspectiveCamera } from '@react-three/drei'
 
 export const MainMenu = () => {
   const { session } = useXR()
   const { isMenuVisible, setMenuVisible } = useModelStore()
-  const { setGameMode, setGlobalScale, setCameraFOV } = useSceneStore()
-  const { camera } = useThree()
+  const { setGameMode, setGlobalScale } = useSceneStore()
 
   useEffect(() => {
     if (session) {
@@ -25,10 +22,6 @@ export const MainMenu = () => {
   }, [session, setMenuVisible])
 
   const handleXRClick = () => {
-    // if (camera instanceof PerspectiveCamera) {
-    //   camera.updateProjectionMatrix()
-    // }
-    setCameraFOV(50)
     setGameMode(GameMode.None)
     setGlobalScale(1)
     session?.end()

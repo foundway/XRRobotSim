@@ -48,9 +48,6 @@ interface SceneState {
   enemyCount: number
   setEnemyCount: (count: number) => void
 
-  cameraFOV: number
-  setCameraFOV: (fov: number) => void
-
   cockpitRef: RefObject<THREE.Object3D | null>
   playerScaleRef: RefObject<THREE.Object3D | null>
   xrOriginRef: RefObject<THREE.Group | null>
@@ -91,9 +88,6 @@ export const useSceneStore = create<SceneState>((set) => ({
 
   enemyCount: 0,
   setEnemyCount: (count) => set({ enemyCount: count }),
-
-  cameraFOV: 50,
-  setCameraFOV: (fov) => set({ cameraFOV: fov }),
 
   cockpitRef: { current: null },
   playerScaleRef: { current: null },

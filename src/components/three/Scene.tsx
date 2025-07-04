@@ -48,7 +48,6 @@ const Scene = ({globalScale}: {globalScale: number}) => {
         <Environment />
         <SparksParticles />
         <DebrisParticles />
-        <axesHelper/>
         {gameMode !== GameMode.None && (
           <XROrigin ref={xrOriginRef} position={[0, 0, 0]} >
             <Cockpit />

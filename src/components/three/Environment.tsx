@@ -10,7 +10,7 @@ const EnvironmentContent = () => {
       files={currentEnvironment}
       {...(showBackground ? {
         background: true,
-        ground: { height: 20, radius: 200, scale: 100 }
+        ground: { height: 30, radius: 1000, scale: 100 }
       } : { background: false })}
     />
   )
