@@ -10,11 +10,13 @@ import { Separator } from './Separator'
 import { useModelStore } from '@/store/ModelStore'
 import { GameMode, useSceneStore } from '@/store/SceneStore'
 import { useThree } from '@react-three/fiber'
+import { PerspectiveCamera } from '@react-three/drei'
 
 export const MainMenu = () => {
   const { session } = useXR()
   const { isMenuVisible, setMenuVisible } = useModelStore()
-  const { setGameMode, setGlobalScale } = useSceneStore()
+  const { setGameMode, setGlobalScale, setCameraFOV } = useSceneStore()
+  const { camera } = useThree()
 
   useEffect(() => {
     if (session) {
@@ -23,6 +25,10 @@ export const MainMenu = () => {
   }, [session, setMenuVisible])
 
   const handleXRClick = () => {
+    // if (camera instanceof PerspectiveCamera) {
+    //   camera.updateProjectionMatrix()
+    // }
+    setCameraFOV(50)
     setGameMode(GameMode.None)
     setGlobalScale(1)
     session?.end()

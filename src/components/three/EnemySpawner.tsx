@@ -2,6 +2,11 @@ import { useState, useRef, Suspense } from 'react'
 import { Vector3 } from 'three'
 import { useFrame } from '@react-three/fiber'
 import { Enemy } from './Enemy'
+import { useSceneStore } from '../../store/SceneStore'
+
+const spawnInterval = 2
+const maxConcurrentEnemies = 10
+const spawnVolume = { minX: -5, maxX: 5, minY: 2, maxY: 5, minZ: -7, maxZ: -5 }
 
 interface EnemyData {
   id: string
@@ -10,14 +15,10 @@ interface EnemyData {
 
 export const EnemySpawner = () => {
   const [enemies, setEnemies] = useState<EnemyData[]>([])
-  const [enemyCount, setEnemyCount] = useState(0)
+  const { enemyCount, setEnemyCount } = useSceneStore()
   const lastSpawnTime = useRef(0)
-  const spawnInterval = 2
-  const maxEnemies = 10
   const hasStarted = useRef(false)
-  const spawnVolume = { minX: -5, maxX: 5, minY: 2, maxY: 5, minZ: -7, maxZ: -5 }
 
-  // Generate random position within spawn volume
   const getRandomSpawnPosition = (): Vector3 => {
     const x = Math.random() * (spawnVolume.maxX - spawnVolume.minX) + spawnVolume.minX
     const y = Math.random() * (spawnVolume.maxY - spawnVolume.minY) + spawnVolume.minY
@@ -25,35 +26,23 @@ export const EnemySpawner = () => {
     return new Vector3(x, y, z)
   }
 
-  // Dispatch event for UI updates
-  const updateEnemyCount = (count: number) => {
-    setEnemyCount(count)
-    window.dispatchEvent(new CustomEvent('enemySpawned', { detail: { count } }))
-  }
-
   useFrame((state) => {
     const currentTime = state.clock.elapsedTime
     
-    // Start spawning after 1 second
     if (!hasStarted.current && currentTime > 1) {
       hasStarted.current = true
       lastSpawnTime.current = currentTime
     }
-    
-    // Check if it's time to spawn a new enemy
-    if (hasStarted.current && currentTime - lastSpawnTime.current >= spawnInterval && enemyCount < maxEnemies) {
+    if (hasStarted.current && currentTime - lastSpawnTime.current >= spawnInterval && enemyCount < maxConcurrentEnemies) {
       const newEnemy: EnemyData = {
         id: `enemy-${Date.now()}-${Math.random()}`,
         position: getRandomSpawnPosition()
       }
-      
       setEnemies(prev => [...prev, newEnemy])
       const newCount = enemyCount + 1
-      updateEnemyCount(newCount)
+      setEnemyCount(newCount)
       lastSpawnTime.current = currentTime
-      
-      // Log spawn for debugging
-      console.log(`Enemy spawned! Total enemies: ${newCount}/${maxEnemies}`)
+      console.log(`Enemy spawned! Total enemies: ${newCount}/${maxConcurrentEnemies}`)
     }
   })
 

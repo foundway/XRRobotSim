@@ -13,6 +13,8 @@ import { MAX_PHYSICS_SPEED } from './Scene'
 const STUN_DURATION = 1 
 const DESTROYED_DURATION = 1 
 const FORCE_DAMAGE_MULTIPLIER = 0.5
+const ROTATE_SPEED = 0.2 
+const MOVE_SPEED = 0.5 
 
 enum EnemyState {
   ALIVE,
@@ -28,7 +30,7 @@ interface EnemyProps {
 
 export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {  
   const modelUrl = 'alien-drone.glb'
-  const { globalScale } = useSceneStore()
+  const { enemyCount, setEnemyCount, globalScale } = useSceneStore()
   const sceneClone = SkeletonUtils.clone(useGLTF(modelUrl).scene)
   const group = useRef<Group>(null)
   const rbdRef = useRef<any>(null)
@@ -40,7 +42,6 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
   const [enemyState, setEnemyState] = useState(EnemyState.ALIVE)
 
   const ENEMY_ORIGIN = initialPosition || new Vector3(0, 4, -5) // Use provided position or default
-  const MOVE_SPEED = 0.5 
 
   const handleContactForce = (event: any) => {
     if (!event.other.rigidBodyObject.userData?.isCharacterHand) return;
@@ -55,7 +56,6 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
     if (vel.length() > MAX_PHYSICS_SPEED * globalScale) {
       event.target.rigidBody.setLinvel(vel.normalize().multiplyScalar(MAX_PHYSICS_SPEED * globalScale), true)
     }
-
     stunStartTime.current = Date.now()
   }
 
@@ -82,6 +82,7 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
       const checkDestroyedEnd = () => {
         if (Date.now() - destroyedStartTime.current >= DESTROYED_DURATION * 1000) {
           console.log('Removed enemy id: ', id)
+          setEnemyCount(enemyCount - 1)
           setEnemyState(EnemyState.REMOVED)
         }
       }
@@ -108,27 +109,19 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
     if (!chestRef.current) return;
     if (!rbdRef.current) return;
 
-    const enemyPosition = rbdRef.current.translation();
-    const enemyPos = new Vector3(enemyPosition.x, enemyPosition.y, enemyPosition.z)
-    const direction = chestRef.current.getWorldPosition(new Vector3()).sub(enemyPos).normalize()
+    const position = new Vector3().copy(rbdRef.current.translation())
+    const characterDir = chestRef.current.getWorldPosition(new Vector3()).sub(position).normalize()
+    const newLinvel = characterDir.clone().multiplyScalar(MOVE_SPEED * globalScale)
     
-    // Create separate vectors for velocity and rotation to avoid modifying the original direction
-    const velocity = direction.clone().multiplyScalar(MOVE_SPEED * globalScale)
-    rbdRef.current.setLinvel(velocity, true)
-
-    // Make enemy face the character with some smoothing
-    if (direction.length() > 0.1) {
-      const targetRotation = new Quaternion().setFromUnitVectors(
-        new Vector3(0, 0, 1), // Forward direction
-        direction
-      )
-      
-      // Smooth rotation
-      const currentRotation = rbdRef.current.rotation()
-      const currentQuat = new Quaternion(currentRotation.x, currentRotation.y, currentRotation.z, currentRotation.w)
-      currentQuat.slerp(targetRotation, 0.5)
-      rbdRef.current.setRotation(currentQuat, true)
-    }
+    const currentQuat = new Quaternion().copy(rbdRef.current.rotation())
+    const currentForward = new Vector3(0, 0, 1).applyQuaternion(currentQuat)
+    
+    const rotationAxis = currentForward.cross(characterDir).normalize()
+    const rotationAngle = Math.acos(currentForward.dot(characterDir))
+    const newAngvel = new Vector3().copy(rotationAxis).multiplyScalar(rotationAngle * ROTATE_SPEED)
+    
+    rbdRef.current.setLinvel(newLinvel, true)
+    rbdRef.current.setAngvel(newAngvel, true)
   }
 
   useFrame((state) => {
@@ -136,46 +129,46 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
     updateSteering()
   })
 
+  if (enemyState === EnemyState.REMOVED) {
+    return null
+  }
+
   return (
     <group ref={group} dispose={null} key={id}>
-      {enemyState !== EnemyState.REMOVED && (
-        <>
-          <RigidBody
-            ref={rbdRef}
-            name="enemy"
-            position={ENEMY_ORIGIN}
-            mass={100}
-            colliders={false}
-            friction={0.7}
-            restitution={0.1}
-            linearDamping={0.9}
-            angularDamping={0.1}
-            gravityScale={enemyState === EnemyState.ALIVE ? 0 : 0.1}
-            onContactForce={handleContactForce}
-            userData={{ isEnemy: true, enemyId: id }}
-          >
-            <BallCollider args={[0.4]} />
-            {enemyState === EnemyState.STUNNED && (
-              <DebrisTimeEmitter velocity={new Vector3().copy(rbdRef.current?.linvel())} />
-            )}
-            {enemyState === EnemyState.DESTROYED && (
-              <DebrisBurstEmitter velocity={new Vector3().copy(rbdRef.current?.linvel())} />
-            )}
-            {enemyState !== EnemyState.DESTROYED && (
-              <>
-                <primitive object={sceneClone}/>
-                <group ref={uiGroupRef}>
-                  <Root pixelSize={0.01} depthTest={false} depthWrite={false} >
-                    <Text fontSize={10} color="white">
-                      HP: {hp.current}
-                    </Text>
-                  </Root>
-                </group>
-              </>
-            )}
-          </RigidBody>
-        </>
-      )}
+      <RigidBody
+        ref={rbdRef}
+        name="enemy"
+        position={ENEMY_ORIGIN}
+        mass={100}
+        colliders={false}
+        friction={0.7}
+        restitution={0.1}
+        linearDamping={2}
+        angularDamping={2}
+        gravityScale={enemyState === EnemyState.ALIVE ? 0 : 0.1}
+        onContactForce={handleContactForce}
+        userData={{ isEnemy: true, enemyId: id }}
+      >
+        <BallCollider args={[0.4]} />
+        {enemyState === EnemyState.STUNNED && (
+          <DebrisTimeEmitter velocity={new Vector3().copy(rbdRef.current?.linvel())} />
+        )}
+        {enemyState === EnemyState.DESTROYED && (
+          <DebrisBurstEmitter velocity={new Vector3().copy(rbdRef.current?.linvel())} />
+        )}
+        {enemyState !== EnemyState.DESTROYED && (
+          <>
+            <primitive object={sceneClone}/>
+            <group ref={uiGroupRef}>
+              <Root pixelSize={0.01} depthTest={false} depthWrite={false} >
+                <Text fontSize={10} color="white">
+                  HP: {hp.current}
+                </Text>
+              </Root>
+            </group>
+          </>
+        )}
+      </RigidBody>
     </group>
   )
 } 

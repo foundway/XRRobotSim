@@ -1,12 +1,9 @@
-import { useEffect } from 'react'
-import { useThree } from '@react-three/fiber'
 import { OrbitControls, Grid } from '@react-three/drei'
 import { useXR, XROrigin } from '@react-three/xr'
 import { Character } from '@/components/three/Character'
 import { Environment } from '@/components/three/Environment'
 import { Cockpit } from '@/components/three/Cockpit'
 import { EnemySpawner } from '@/components/three/EnemySpawner'
-import { MainMenu } from '@/components/ui/MainMenu'
 import { GameMode, useSceneStore } from '@/store/SceneStore'
 import { DebrisParticles, SparksParticles } from './Particles'
 

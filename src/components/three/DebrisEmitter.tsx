@@ -27,7 +27,6 @@ const createParticleSettings = (globalScale: number, dir: Vector3) => ({
 
 export const DebrisTimeEmitter = ({ velocity }: { velocity: Vector3 }) => {
   const { globalScale } = useSceneStore()
-  console.log(velocity.length())
   return (
     <VFXEmitter
       emitter="debris"

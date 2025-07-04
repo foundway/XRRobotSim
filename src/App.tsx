@@ -152,16 +152,17 @@ const SettingsMenu = () => {
 }
 
 const App = () => {
-  const { paused, globalScale, gameMode, debug } = useSceneStore()
+  const { paused, globalScale, gameMode, debug, cameraFOV } = useSceneStore()
 
   return (
     <AppContextProvider>
       <div style={{ width: '100vw', height: '100vh', backgroundColor: 'black' }}>
-        <Canvas
+        <Canvas 
           className="pointer-events-none" 
-          shadows
+          shadows 
+          camera={{ fov: cameraFOV, position: [-1, 0.5, -6] }} 
         >
-          <PerspectiveCamera key={gameMode} fov={50} makeDefault position={[-1, 0.5, -6]} />
+          {/* {gameMode === GameMode.None && <PerspectiveCamera makeDefault fov={50} position={[-1, 0.5, -6]} />} */}
           <XR store={store}>
             <Physics debug={debug} paused={paused}>
               <Scene key={gameMode} globalScale={globalScale}  />

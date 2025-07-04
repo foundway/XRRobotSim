@@ -113,10 +113,8 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
             index: bones.findIndex(bone => bone.name === 'shoulderR'),
             rotationMin: new Vector3(0, -1.5, 0),
             rotationMax: new Vector3(0, 1.5, 0),
-          }
-        ],
-      },
-      {
+          } ],
+      }, {
         target: bones.findIndex(bone => bone.name === 'ikhandL'),
         effector: bones.findIndex(bone => bone.name === 'handL'),
         links: [
@@ -224,7 +222,6 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
       chestRef.current.position.copy(nodes.chest.getWorldPosition(new Vector3()).multiplyScalar(1/globalScale))
       chestRef.current.quaternion.copy(nodes.chest.getWorldQuaternion(new Quaternion()))
     }
-
     if (rightControllerRef.current) {
       const controllerWorldPos = rightControllerRef.current.getWorldPosition(new Vector3())
       const controllerWorldQuat = rightControllerRef.current.getWorldQuaternion(new Quaternion())
@@ -236,7 +233,6 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
       nodes.ikhandR.position.copy(localPos.multiplyScalar(HAND_LENGTH_MULTIPLIER))
       nodes.ikhandR.quaternion.copy(localQuat)
     }
-
     if (leftControllerRef.current) {
       const controllerWorldPos = leftControllerRef.current.getWorldPosition(new Vector3())
       const controllerWorldQuat = leftControllerRef.current.getWorldQuaternion(new Quaternion())
@@ -273,17 +269,13 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
     }
   } 
 
-  useFrame(() => { 
-    locomotionUpdate()
-    ikUpdate()
-    RBDUpdate()
-    if (xrOriginRef.current && gameMode == GameMode.TwentyMeterMounted) {
-      xrOriginRef.current.position.copy(nodes.head.getWorldPosition(new Vector3()).add(new Vector3(0, 0, 0)))
-      xrOriginRef.current.quaternion.copy(nodes.head.getWorldQuaternion(new Quaternion()))  
-      xrOriginRef.current.rotateOnAxis(new Vector3(0, 1, 0), Math.PI)
-    }
-  })
-
+  const xrOriginUpdate = () => {
+    if (!xrOriginRef.current || gameMode !== GameMode.TwentyMeterMounted) return
+    xrOriginRef.current.position.copy(nodes.head.getWorldPosition(new Vector3()).add(new Vector3(0, 0, 0)))
+    xrOriginRef.current.quaternion.copy(nodes.head.getWorldQuaternion(new Quaternion()))  
+    xrOriginRef.current.rotateOnAxis(new Vector3(0, 1, 0), Math.PI)
+  }
+  
   const handleCollision = (event: any) => {
     if (!event.other.rigidBody.userData.isEnemy) return
     const vel = new Vector3().copy(event.target.rigidBody.linvel())
@@ -297,6 +289,13 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
     }
     setSparksInstances(prev => [...prev, newSparks])
   }
+
+  useFrame(() => { 
+    xrOriginUpdate()
+    locomotionUpdate()
+    ikUpdate()
+    RBDUpdate()
+  })
 
   return (
     <>
@@ -337,7 +336,7 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
         <SparksEmitter key={sparks.id} position={sparks.position} velocity={sparks.velocity} />
       ))}
       <group ref={chestRef}>
-        {!debug && <mesh >
+        {debug && <mesh >
           <boxGeometry args={[1, 0, 1]} />
           <meshBasicMaterial color="blue" wireframe={true} />
         </mesh>}
