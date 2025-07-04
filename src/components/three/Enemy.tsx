@@ -20,7 +20,7 @@ enum EnemyState {
   ALIVE,
   STUNNED,
   DESTROYED,
-  REMOVED
+  TO_BE_REMOVED
 }
 
 interface EnemyProps {
@@ -28,37 +28,7 @@ interface EnemyProps {
   id?: string
 }
 
-const TOP_BORDER_PROPS = {
-  positionType: "absolute" as const,
-  width: "100%" as const,
-  height: 20,
-  positionTop: 0,
-  positionLeft: 0,
-  positionRight: 0,
-  backgroundOpacity: 0,
-  borderColor: "white" as const,
-  borderLeftWidth: 1,
-  borderRightWidth: 1,
-  borderTopWidth: 1,
-  borderBottomWidth: 0,
-}
-
-const BOTTOM_BORDER_PROPS = {
-  positionType: "absolute" as const,
-  width: "100%" as const,
-  height: 20,
-  positionBottom: 0,
-  positionLeft: 0,
-  positionRight: 0,
-  backgroundOpacity: 0,
-  borderColor: "white" as const,
-  borderLeftWidth: 1,
-  borderRightWidth: 1,
-  borderTopWidth: 0,
-  borderBottomWidth: 1,
-}
-
-export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {  
+export const Enemy = ({ initialPosition, id }: EnemyProps) => {  
   const modelUrl = 'alien-drone.glb'
   const { enemyCount, enemyCountMax, setEnemyCount, globalScale, debug } = useSceneStore()
   const sceneClone = SkeletonUtils.clone(useGLTF(modelUrl).scene)
@@ -113,7 +83,7 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
         if (Date.now() - destroyedStartTime.current >= DESTROYED_DURATION * 1000) {
           setEnemyCount(enemyCount - 1)
           console.log(`Enemy destroyed! Total enemies: ${enemyCount - 1}/${enemyCountMax}`)
-          setEnemyState(EnemyState.REMOVED)
+          setEnemyState(EnemyState.TO_BE_REMOVED)
         }
       }
       const interval = setInterval(checkDestroyedEnd, 100)
@@ -158,7 +128,7 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
     updateSteering()
   })
 
-  if (enemyState === EnemyState.REMOVED) {
+  if (enemyState === EnemyState.TO_BE_REMOVED) {
     return null
   }
 
