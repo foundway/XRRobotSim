@@ -13,15 +13,12 @@ import { useThree } from '@react-three/fiber'
 import { PerspectiveCamera } from 'three'
 
 const DEFAULT_CAMERA_FOV = 50
-
+const GAME_MODE_BUTTON_CLASS = "rounded-xl w-50 h-20 cursor-pointer backdrop-blur-lg bg-black/30 hover:bg-black/50 shadow-lg flex flex-col"
 const store = createXRStore({
   controller: XRController,
   bounded: false
 })
 
-const GAME_MODE_BUTTON_CLASS = "rounded-xl w-50 h-20 cursor-pointer backdrop-blur-lg bg-black/30 hover:bg-black/50 shadow-lg flex flex-col"
-
-// Reusable menu item button
 const MenuItemButton = ({ onClick, children }: { onClick: () => void, children: React.ReactNode }) => (
   <Button 
     variant="ghost" 

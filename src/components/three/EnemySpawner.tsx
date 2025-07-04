@@ -5,7 +5,6 @@ import { Enemy } from './Enemy'
 import { useSceneStore } from '../../store/SceneStore'
 
 const spawnInterval = 2
-const maxConcurrentEnemies = 10
 const spawnVolume = { minX: -5, maxX: 5, minY: 2, maxY: 5, minZ: -7, maxZ: -5 }
 
 interface EnemyData {
@@ -15,7 +14,7 @@ interface EnemyData {
 
 export const EnemySpawner = () => {
   const [enemies, setEnemies] = useState<EnemyData[]>([])
-  const { enemyCount, setEnemyCount } = useSceneStore()
+  const { enemyCount, enemyCountMax, setEnemyCount } = useSceneStore()
   const lastSpawnTime = useRef(0)
   const hasStarted = useRef(false)
 
@@ -33,7 +32,7 @@ export const EnemySpawner = () => {
       hasStarted.current = true
       lastSpawnTime.current = currentTime
     }
-    if (hasStarted.current && currentTime - lastSpawnTime.current >= spawnInterval && enemyCount < maxConcurrentEnemies) {
+    if (hasStarted.current && currentTime - lastSpawnTime.current >= spawnInterval && enemyCount < enemyCountMax) {
       const newEnemy: EnemyData = {
         id: `enemy-${Date.now()}-${Math.random()}`,
         position: getRandomSpawnPosition()
@@ -42,7 +41,7 @@ export const EnemySpawner = () => {
       const newCount = enemyCount + 1
       setEnemyCount(newCount)
       lastSpawnTime.current = currentTime
-      console.log(`Enemy spawned! Total enemies: ${newCount}/${maxConcurrentEnemies}`)
+      console.log(`Enemy spawned! Total enemies: ${newCount}/${enemyCountMax}`)
     }
   })
 

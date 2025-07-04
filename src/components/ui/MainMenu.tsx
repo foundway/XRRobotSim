@@ -7,6 +7,7 @@ import { EnvironmentMenu } from './EnvironmentMenu'
 import { Separator } from './Separator'
 import { useModelStore } from '@/store/ModelStore'
 import { GameMode, useSceneStore } from '@/store/SceneStore'
+import { GeometryMenu } from './GeometryMenu'
 
 export const MainMenu = () => {
   const { session } = useXR()
@@ -50,9 +51,10 @@ export const MainMenu = () => {
           borderWidth={1} 
           padding={4} 
         >
+          <GeometryMenu />
           <EnvironmentMenu />
           <Separator />
-          <Button onClick={handleXRClick} variant="ghost" hover={{ backgroundOpacity: 0.5 }}>
+          <Button onClick={handleXRClick} variant="ghost" hover={{ backgroundOpacity: 0.1 }}>
             <Text width={"100%"}>Exit XR</Text>
           </Button>
         </Card>)}

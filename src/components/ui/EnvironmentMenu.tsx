@@ -28,7 +28,7 @@ export const EnvironmentMenu = () => {
 
   return (
     <SubMenu title="Scene">
-      <Button onClick={toggleBackground} variant="ghost" hover={{ backgroundOpacity: 0.5 }}>
+      <Button onClick={toggleBackground} variant="ghost" hover={{ backgroundOpacity: 0.1 }}>
         <Container width={16} />
         <Text width={"100%"}>{showBackground ? 'Hide Background' : 'Show Background'}</Text>
       </Button>
@@ -38,7 +38,7 @@ export const EnvironmentMenu = () => {
         <Button
           key={name}
           variant="ghost"
-          hover={{ backgroundOpacity: 0.6 }}
+          hover={{ backgroundOpacity: 0.1 }}
           gap={4}
           alignItems="center"
           onClick={() => setEnvironment(url)}

@@ -8,16 +8,16 @@ import { Separator } from './Separator'
 import { useSceneStore } from '@/store/SceneStore'
 
 const InputSlider = () => {
-  const { globalScale } = useSceneStore()
+  const { enemyCountMax, setEnemyCountMax } = useSceneStore()
   return (
     <Container flexDirection="column" marginTop={0} marginLeft={12} marginRight={12} marginBottom={8} >
-      <Text paddingBottom={16} fontWeight="bold" fontSize={10}>Brightness</Text>
+      <Text paddingBottom={16} fontWeight="bold" fontSize={10}>Enemy Count</Text>
       <Container alignItems="center" gap={12} paddingRight={12}>
-        <Text width={40} textAlign="left">{globalScale.toFixed(2)}</Text>
+        <Text width={40} textAlign="left">{enemyCountMax.toFixed(0)}</Text>
         <Slider
-          min={0.1} max={20} step={0.01} width={120} value={globalScale}
+          min={0} max={20} step={1} width={120} value={enemyCountMax}
           onValueChange={(value) => {
-            console.log('setting value', value)
+            setEnemyCountMax(value)
           }}
         />
       </Container>
@@ -41,13 +41,13 @@ export const GeometryMenu = () => {
 
   return (
     <SubMenu title="Geometry" cardPadding={12}>
-      <Button variant="ghost" hover={{ backgroundOpacity: 0.5 }}>
+      <Button variant="ghost" hover={{ backgroundOpacity: 0.1 }}>
         <Text width="100%">Enable Steering</Text>
       </Button>
       <Separator />
       <InputSlider />
       <Separator />
-      <Button variant="ghost" onClick={resetTransformation} hover={{ backgroundOpacity: 0.5 }}>
+      <Button variant="ghost" onClick={resetTransformation} hover={{ backgroundOpacity: 0.1 }}>
         <Text width={"100%"}>Reset Transformation</Text>
       </Button>
     </SubMenu>

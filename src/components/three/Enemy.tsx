@@ -60,7 +60,7 @@ const BOTTOM_BORDER_PROPS = {
 
 export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {  
   const modelUrl = 'alien-drone.glb'
-  const { enemyCount, setEnemyCount, globalScale, debug } = useSceneStore()
+  const { enemyCount, enemyCountMax, setEnemyCount, globalScale, debug } = useSceneStore()
   const sceneClone = SkeletonUtils.clone(useGLTF(modelUrl).scene)
   const group = useRef<Group>(null)
   const rbdRef = useRef<any>(null)
@@ -112,13 +112,14 @@ export const Enemy = ({ initialPosition, id, ...props }: EnemyProps) => {
       const checkDestroyedEnd = () => {
         if (Date.now() - destroyedStartTime.current >= DESTROYED_DURATION * 1000) {
           setEnemyCount(enemyCount - 1)
+          console.log(`Enemy destroyed! Total enemies: ${enemyCount - 1}/${enemyCountMax}`)
           setEnemyState(EnemyState.REMOVED)
         }
       }
       const interval = setInterval(checkDestroyedEnd, 100)
       return () => clearInterval(interval)
     }
-  }, [enemyState, id])
+  }, [enemyState, id, enemyCount, enemyCountMax])
 
   const updateUI = (state: any) => {
     if (uiGroupRef.current) {

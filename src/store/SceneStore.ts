@@ -50,6 +50,9 @@ interface SceneState {
   enemyCount: number
   setEnemyCount: (count: number) => void
 
+  enemyCountMax: number
+  setEnemyCountMax: (count: number) => void
+
   backgroundIntensity: number
   setBackgroundIntensity: (intensity: number) => void
 
@@ -99,6 +102,9 @@ export const useSceneStore = create<SceneState>((set) => ({
 
   enemyCount: 0,
   setEnemyCount: (count) => set({ enemyCount: count }),
+
+  enemyCountMax: 10,
+  setEnemyCountMax: (count) => set({ enemyCountMax: count }),
 
   backgroundIntensity: 1,
   setBackgroundIntensity: (intensity) => set({ backgroundIntensity: intensity }),
