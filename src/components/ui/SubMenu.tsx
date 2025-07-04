@@ -48,7 +48,7 @@ export const SubMenu = ({ title, children, cardWidth = 200, cardPadding = 4 }: S
             width={cardWidth}
             backgroundOpacity={0.4}
             borderColor="white"
-            borderWidth={2}
+            borderWidth={1}
           >
             {children}
           </Card>

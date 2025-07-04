@@ -42,15 +42,15 @@ export const MainMenu = () => {
         alignItems={"center"} 
       >
         {isMenuVisible && (<Card 
-          positionType="absolute" positionBottom={50} 
+          positionType="absolute" 
+          positionBottom={50} 
           flexDirection="column" 
           alignItems="stretch" 
           backgroundOpacity={0.4} 
-          borderColor="white" borderWidth={2} 
+          borderColor="white" 
+          borderWidth={1} 
           padding={4} 
         >
-          <GeometryMenu />
-          <AnimationMenu />
           <EnvironmentMenu />
           <Separator />
           <Button onClick={handleXRClick} variant="ghost" hover={{ backgroundOpacity: 0.5 }}>

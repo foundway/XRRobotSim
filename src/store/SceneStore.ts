@@ -48,6 +48,9 @@ interface SceneState {
   enemyCount: number
   setEnemyCount: (count: number) => void
 
+  backgroundIntensity: number
+  setBackgroundIntensity: (intensity: number) => void
+
   cockpitRef: RefObject<THREE.Object3D | null>
   playerScaleRef: RefObject<THREE.Object3D | null>
   xrOriginRef: RefObject<THREE.Group | null>
@@ -88,6 +91,9 @@ export const useSceneStore = create<SceneState>((set) => ({
 
   enemyCount: 0,
   setEnemyCount: (count) => set({ enemyCount: count }),
+
+  backgroundIntensity: 1,
+  setBackgroundIntensity: (intensity) => set({ backgroundIntensity: intensity }),
 
   cockpitRef: { current: null },
   playerScaleRef: { current: null },

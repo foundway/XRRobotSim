@@ -10,7 +10,7 @@ import { DebrisParticles, SparksParticles } from './Particles'
 export const MAX_PHYSICS_SPEED = 10
 
 const Scene = ({globalScale}: {globalScale: number}) => {
-  const { showGrid, playerScaleRef, xrOriginRef, gameMode } = useSceneStore()
+  const { debug, playerScaleRef, xrOriginRef, gameMode } = useSceneStore()
   const { session } = useXR()
 
   return (
@@ -29,7 +29,7 @@ const Scene = ({globalScale}: {globalScale: number}) => {
           rotateSpeed={2}
           autoRotateSpeed={1}
         />}
-        {showGrid && (
+        {debug && (
           <Grid
             position={[0, 0, 0]}
             args={[20, 20]}

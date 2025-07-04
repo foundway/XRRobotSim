@@ -5,8 +5,26 @@ import { useSceneStore, Environments } from '@/store/SceneStore'
 import { Separator } from '@/components/ui/Separator'
 import { SubMenu } from '@/components/ui/SubMenu'
 
+const BrightnessSlider = () => {
+  const { backgroundIntensity, setBackgroundIntensity } = useSceneStore()
+  return (
+    <Container flexDirection="column" marginTop={0} marginLeft={24} marginRight={12} marginBottom={8} >
+      <Text paddingBottom={16} fontWeight="bold" fontSize={10}>Brightness</Text>
+      <Container alignItems="center" gap={12} paddingRight={12}>
+        <Text width={40} textAlign="left">{backgroundIntensity.toFixed(2)}</Text>
+        <Slider
+          min={0.01} max={2} step={0.001} width={120} value={backgroundIntensity}
+          onValueChange={(value) => {
+            setBackgroundIntensity(value)
+          }}
+        />
+      </Container>
+    </Container>
+  )
+}
+
 export const EnvironmentMenu = () => {
-  const { setEnvironment, currentEnvironment, showBackground, toggleBackground, showGrid, toggleGrid } = useSceneStore()
+  const { setEnvironment, currentEnvironment, showBackground, toggleBackground } = useSceneStore()
 
   return (
     <SubMenu title="Scene">
@@ -14,6 +32,7 @@ export const EnvironmentMenu = () => {
         <Container width={16} />
         <Text width={"100%"}>{showBackground ? 'Hide Background' : 'Show Background'}</Text>
       </Button>
+      <BrightnessSlider />
       <Separator />
       {Object.entries(Environments).map(([name, url]) => (
         <Button
@@ -28,11 +47,6 @@ export const EnvironmentMenu = () => {
           <Text width="100%">{name}</Text>
         </Button>
       ))}
-      <Separator />
-      <Button onClick={toggleGrid} variant="ghost" gap={8} hover={{ backgroundOpacity: 0.5 }}>
-        <Container width={16} />
-        <Text width={"100%"}>{showGrid ? 'Hide Grid' : 'Show Grid'}</Text>
-      </Button>
     </SubMenu>
   )
 } 
