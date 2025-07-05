@@ -1,5 +1,5 @@
 import { Group, Vector3, Quaternion } from 'three'
-import { useEffect, useRef, useState} from 'react'
+import { useEffect, useRef, useState, useImperativeHandle, forwardRef } from 'react'
 import { useGLTF } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import { RigidBody, BallCollider } from '@react-three/rapier'
@@ -8,7 +8,6 @@ import { SkeletonUtils } from 'three-stdlib'
 import { useAnimationStore } from '@/store/AnimationStore'
 import { useSceneStore } from '@/store/SceneStore'
 import { DebrisBurstEmitter, DebrisTimeEmitter } from './DebrisEmitter'
-import { MAX_PHYSICS_SPEED } from './Scene'
 
 const STUN_DURATION = 1 
 const DESTROYED_DURATION = 1 
@@ -16,21 +15,26 @@ const FORCE_DAMAGE_MULTIPLIER = 0.5
 const ROTATE_SPEED = 0.2 
 const MOVE_SPEED = 0.5 
 
-enum EnemyState {
+export enum EnemyState {
   ALIVE,
   STUNNED,
   DESTROYED,
-  TO_BE_REMOVED
+  HIBERNATING
 }
 
 interface EnemyProps {
-  initialPosition?: Vector3
   id?: string
+  onRegister?: (id: string, ref: { isHibernated: () => boolean, spawn: (position: Vector3) => void }) => void
 }
 
-export const Enemy = ({ initialPosition, id }: EnemyProps) => {  
+export interface EnemyRef {
+  isHibernated: () => boolean
+  spawn: (position: Vector3) => void
+}
+
+export const Enemy = forwardRef<EnemyRef, EnemyProps>(({ id, onRegister }, ref) => {  
   const modelUrl = 'alien-drone.glb'
-  const { enemyCount, enemyCountMax, setEnemyCount, globalScale, debug } = useSceneStore()
+  const { globalScale, debug } = useSceneStore()
   const sceneClone = SkeletonUtils.clone(useGLTF(modelUrl).scene)
   const group = useRef<Group>(null)
   const rbdRef = useRef<any>(null)
@@ -38,24 +42,41 @@ export const Enemy = ({ initialPosition, id }: EnemyProps) => {
   const stunStartTime = useRef(0)
   const destroyedStartTime = useRef(0)
   const { chestRef } = useAnimationStore()
-  const hp = useRef(100)
-  const [enemyState, setEnemyState] = useState(EnemyState.ALIVE)
+  
+  const [enemyState, setEnemyState] = useState<EnemyState>(EnemyState.HIBERNATING)
+  const [currentHp, setCurrentHp] = useState(100)
+  const [position, setPosition] = useState<Vector3>(new Vector3(0, 4, -5))
 
-  const ENEMY_ORIGIN = initialPosition || new Vector3(0, 4, -5) // Use provided position or default
+  useImperativeHandle(ref, () => ({
+    isHibernated: () => enemyState === EnemyState.HIBERNATING,
+    spawn: (newPosition: Vector3) => {
+      setPosition(newPosition)
+      setEnemyState(EnemyState.ALIVE)
+      setCurrentHp(100)
+    }
+  }), [enemyState])
+
+  useEffect(() => {
+    if (onRegister && id) {
+      onRegister(id, {
+        isHibernated: () => enemyState === EnemyState.HIBERNATING,
+        spawn: (newPosition: Vector3) => {
+          setPosition(newPosition)
+          setEnemyState(EnemyState.ALIVE)
+          setCurrentHp(100)
+        }
+      })
+    }
+  }, [onRegister, id, enemyState])
 
   const handleContactForce = (event: any) => {
     if (!event.other.rigidBodyObject.userData?.isCharacterHand) return;
 
     const force = new Vector3(event.totalForce.x, event.totalForce.y, event.totalForce.z);
     const damage = Math.max(0, Math.floor(force.length() * FORCE_DAMAGE_MULTIPLIER / Math.pow(globalScale, 4)));
-    hp.current -= damage;
-
-    setEnemyState(EnemyState.STUNNED);
-
-    const vel = new Vector3().copy(event.target.rigidBody.linvel())
-    if (vel.length() > MAX_PHYSICS_SPEED * globalScale) {
-      event.target.rigidBody.setLinvel(vel.normalize().multiplyScalar(MAX_PHYSICS_SPEED * globalScale), true)
-    }
+    
+    setCurrentHp(Math.max(0, currentHp - damage))
+    setEnemyState(EnemyState.STUNNED)
     stunStartTime.current = Date.now()
   }
 
@@ -65,31 +86,24 @@ export const Enemy = ({ initialPosition, id }: EnemyProps) => {
     rbdRef.current.setGravityScale(1)
   }
 
-  useEffect(() => {
+  useEffect(() => { 
     if (enemyState === EnemyState.STUNNED) {
-      const checkStunEnd = () => {
-        if (Date.now() - stunStartTime.current >= STUN_DURATION * 1000) {
-          if (hp.current <= 0) {
-            destroyed()
-          } else {
-            setEnemyState(EnemyState.ALIVE)
-          }
+      const stunRecoveryTimeout = setTimeout(() => {
+        if (currentHp <= 0) {
+          destroyed()
+        } else {
+          setEnemyState(EnemyState.ALIVE)
         }
-      }
-      const interval = setInterval(checkStunEnd, 100)
-      return () => clearInterval(interval)
-    } else if (enemyState === EnemyState.DESTROYED) {
-      const checkDestroyedEnd = () => {
-        if (Date.now() - destroyedStartTime.current >= DESTROYED_DURATION * 1000) {
-          setEnemyCount(enemyCount - 1)
-          console.log(`Enemy destroyed! Total enemies: ${enemyCount - 1}/${enemyCountMax}`)
-          setEnemyState(EnemyState.TO_BE_REMOVED)
-        }
-      }
-      const interval = setInterval(checkDestroyedEnd, 100)
-      return () => clearInterval(interval)
+      }, STUN_DURATION * 1000)
+      return () => clearTimeout(stunRecoveryTimeout)
+    } 
+    else if (enemyState === EnemyState.DESTROYED) {
+      const respawnTimeout = setTimeout(() => {
+        setEnemyState(EnemyState.HIBERNATING)
+      }, DESTROYED_DURATION * 1000)
+      return () => clearTimeout(respawnTimeout)
     }
-  }, [enemyState, id, enemyCount, enemyCountMax])
+  }, [enemyState, currentHp])
 
   const updateUI = (state: any) => {
     if (uiGroupRef.current) {
@@ -108,8 +122,8 @@ export const Enemy = ({ initialPosition, id }: EnemyProps) => {
     if (enemyState !== EnemyState.ALIVE) return;
     if (!chestRef.current || !rbdRef.current) return;
 
-    const position = new Vector3().copy(rbdRef.current.translation())
-    const characterDir = chestRef.current.getWorldPosition(new Vector3()).sub(position).normalize()
+    const currentPosition = new Vector3().copy(rbdRef.current.translation())
+    const characterDir = chestRef.current.getWorldPosition(new Vector3()).sub(currentPosition).normalize()
     const newLinvel = characterDir.clone().multiplyScalar(MOVE_SPEED * globalScale)
     
     const currentQuat = new Quaternion().copy(rbdRef.current.rotation())
@@ -128,22 +142,18 @@ export const Enemy = ({ initialPosition, id }: EnemyProps) => {
     updateSteering()
   })
 
-  if (enemyState === EnemyState.TO_BE_REMOVED) {
-    return null
-  }
-
   return (
-    <group ref={group} dispose={null} key={id}>
+    <group ref={group} dispose={null} key={id} visible={enemyState !== EnemyState.HIBERNATING}>
       <RigidBody
         ref={rbdRef}
         name="enemy"
-        position={ENEMY_ORIGIN}
+        position={position}
         mass={100}
         colliders={false}
         friction={0.7}
         restitution={0.1}
-        linearDamping={2}
-        angularDamping={2}
+        linearDamping={3}
+        angularDamping={3}
         gravityScale={enemyState === EnemyState.ALIVE ? 0 : 0.1}
         onContactForce={handleContactForce}
         userData={{ isEnemy: true, enemyId: id }}
@@ -161,10 +171,10 @@ export const Enemy = ({ initialPosition, id }: EnemyProps) => {
             <group ref={uiGroupRef}>
               <Root pixelSize={0.01} depthTest={false} depthWrite={false} >
                 <Container width={80} height={80} backgroundOpacity={0} >
-                <Container width={hp.current/100 * 40} height={4} backgroundColor={"red"} positionType={"absolute"} positionTop={0} positionLeft={20}/>
+                <Container width={currentHp/100 * 40} height={4} backgroundColor={"red"} positionType={"absolute"} positionTop={0} positionLeft={20}/>
                 <Container width={40} height={1} backgroundColor={"red"} positionType={"absolute"} positionTop={4} positionLeft={20}/>
                 {debug && <Text fontSize={10} color="white">
-                  HP: {hp.current}
+                  HP: {currentHp}
                 </Text>}
                 </Container>
               </Root>
@@ -174,6 +184,6 @@ export const Enemy = ({ initialPosition, id }: EnemyProps) => {
       </RigidBody>
     </group>
   )
-} 
+})
 
 useGLTF.preload('alien-drone.glb')
