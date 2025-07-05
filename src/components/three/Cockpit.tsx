@@ -1,7 +1,7 @@
 import { Vector3 } from 'three'
 import { useFrame } from '@react-three/fiber'
 import { Root, Container } from '@react-three/uikit'
-import { useSceneStore } from '@/store/SceneStore'
+import { useSceneStore, GameMode } from '@/store/SceneStore'
 import { useAnimationStore } from '@/store/AnimationStore'
 import { MainMenu } from '../ui/MainMenu'
 
@@ -35,7 +35,7 @@ const getHorizontalDirectionToCharacter = (cameraPosition: Vector3, characterPos
 }
 
 export const Cockpit = () => {
-  const { cockpitRef, debug } = useSceneStore()
+  const { cockpitRef, debug, gameMode } = useSceneStore()
   const { chestRef } = useAnimationStore()
 
   useFrame((state) => {
@@ -46,8 +46,12 @@ export const Cockpit = () => {
     
     const targetPosition = chestRef.current.localToWorld(HUD_AIM_TARGET_OFFSET.clone())
     const direction = getHorizontalDirectionToCharacter(state.camera.position, targetPosition)
-    const angleY = Math.atan2(direction.x, direction.z) // Calculate Y rotation to face the character
-    cockpitRef.current.rotation.set(0, angleY, 0) // Set rotation only around Y axis
+    const angleY = Math.atan2(direction.x, direction.z) 
+    if (gameMode != GameMode.TwentyMeterMounted) {
+      cockpitRef.current.rotation.set(0, angleY, 0)
+    } else {
+      cockpitRef.current.rotation.set(0, Math.PI, 0) 
+    }
   })
 
   return (

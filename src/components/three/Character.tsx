@@ -10,10 +10,9 @@ import { useFrame } from '@react-three/fiber'
 import { useXRInputSourceState } from '@react-three/xr'
 import { RigidBody, BallCollider, CuboidCollider } from '@react-three/rapier'
 import { SparksEmitter } from './SparksEmitter'
-import { MAX_PHYSICS_SPEED } from './Scene'
 
 const DEADZONE = 0.3
-const LOCOMOTION_TRANSITION_SECONDS = 0.0
+const LOCOMOTION_TRANSITION = 0
 const VECTOR_UP = new Vector3(0, 1, 0)
 const HAND_LENGTH_MULTIPLIER = 2
 
@@ -34,6 +33,7 @@ interface SparksData {
 export const Character = (props: JSX.IntrinsicElements['group']) => {  
   const lastCycleTime = useRef(0)
   const [sparksInstances, setSparksInstances] = useState<SparksData[]>([])
+  const [ isLocomotionActive, setIsLocomotionActive ] = useState(false)
   const { chestRef, characterPosition, characterOrientation, } = useAnimationStore()
 
   const rightController = useXRInputSourceState('controller', 'right')
@@ -145,7 +145,7 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
       setCurrentAction(actions.Idle)
     }
     return () => {
-      currentAction?.fadeOut(LOCOMOTION_TRANSITION_SECONDS)
+      currentAction?.fadeOut(LOCOMOTION_TRANSITION)
     }
   }, [actions, gameMode])
 
@@ -179,28 +179,28 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
       } 
     }
     if (command == LocomotionCommand.Forward && !actions.Forward?.isRunning()) {
-      currentAction?.fadeOut(LOCOMOTION_TRANSITION_SECONDS)
-      actions.Forward?.reset().fadeIn(LOCOMOTION_TRANSITION_SECONDS).play()
+      currentAction?.fadeOut(LOCOMOTION_TRANSITION)
+      actions.Forward?.reset().fadeIn(LOCOMOTION_TRANSITION).play()
       setCurrentAction(actions.Forward)
     } 
     else if (command == LocomotionCommand.Backward && !actions.Backward?.isRunning()) {
-      currentAction?.fadeOut(LOCOMOTION_TRANSITION_SECONDS)
-      actions.Backward?.reset().fadeIn(LOCOMOTION_TRANSITION_SECONDS).play()
+      currentAction?.fadeOut(LOCOMOTION_TRANSITION)
+      actions.Backward?.reset().fadeIn(LOCOMOTION_TRANSITION).play()
       setCurrentAction(actions.Backward)
     } 
     else if (command == LocomotionCommand.TurnRight && !actions.TurnRight?.isRunning()) {
-      currentAction?.fadeOut(LOCOMOTION_TRANSITION_SECONDS)
-      actions.TurnRight?.reset().fadeIn(LOCOMOTION_TRANSITION_SECONDS).play()
+      currentAction?.fadeOut(LOCOMOTION_TRANSITION)
+      actions.TurnRight?.reset().fadeIn(LOCOMOTION_TRANSITION).play()
       setCurrentAction(actions.TurnRight)
     } 
     else if (command == LocomotionCommand.TurnLeft && !actions.TurnLeft?.isRunning()) {
-      currentAction?.fadeOut(LOCOMOTION_TRANSITION_SECONDS)
-      actions.TurnLeft?.reset().fadeIn(LOCOMOTION_TRANSITION_SECONDS).play()
+      currentAction?.fadeOut(LOCOMOTION_TRANSITION)
+      actions.TurnLeft?.reset().fadeIn(LOCOMOTION_TRANSITION).play()
       setCurrentAction(actions.TurnLeft)
     }
     else if (command == LocomotionCommand.Idle && !actions.Idle?.isRunning() && lastCycleTime.current > currentAction.time) {
-      currentAction?.fadeOut(LOCOMOTION_TRANSITION_SECONDS)
-      actions.Idle?.reset().fadeIn(LOCOMOTION_TRANSITION_SECONDS).play()
+      currentAction?.fadeOut(LOCOMOTION_TRANSITION)
+      actions.Idle?.reset().fadeIn(LOCOMOTION_TRANSITION).play()
       setCurrentAction(actions.Idle)
     }
     lastRootPosition.current = nodes.root.position.clone()
@@ -208,7 +208,7 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
     lastCycleTime.current = currentAction.time
   }
 
-  const ikUpdate = () => {
+  const ikUpdate = () => { // TODO: Need to have better limit and control elbow with influence
     if (!cockpitRef.current) return
 
     if (chestRef.current) {
@@ -291,7 +291,7 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
     <>
       <group {...props} ref={characterRef} position={characterPosition} rotation={[0, characterOrientation, 0]}>
         <primitive object={scene} scale={scale} userData={{ isCharacter: true }} />
-        <CuboidCollider args={[100, 1, 100]} position={[0, -0.5, 0]}/>
+        <CuboidCollider args={[200, 100, 200]} position={[0, -50, 0]}/>
       </group>
       <RigidBody
         ref={bodyRigidBodyRef}
