@@ -5,7 +5,7 @@ import { useGLTF, useAnimations } from '@react-three/drei'
 import { useModels } from '@/context/AppContext'
 import { useModelStore } from '@/store/ModelStore'
 import { useAnimationStore } from '@/store/AnimationStore'
-import { GameMode, useSceneStore } from '@/store/SceneStore'
+import { GameMode, useSceneStore, LocomotionCommand } from '@/store/SceneStore'
 import { useFrame } from '@react-three/fiber'
 import { useXRInputSourceState } from '@react-three/xr'
 import { RigidBody, BallCollider, CuboidCollider } from '@react-three/rapier'
@@ -16,25 +16,18 @@ const LOCOMOTION_TRANSITION = 0
 const VECTOR_UP = new Vector3(0, 1, 0)
 const HAND_LENGTH_MULTIPLIER = 2
 
-enum LocomotionCommand {
-  Idle = 'Idle',
-  Forward = 'Forward', 
-  Backward = 'Backward',
-  TurnRight = 'TurnRight',
-  TurnLeft = 'TurnLeft'
-}
-
 interface SparksData {
   id: string
   position: Vector3
   velocity: Vector3
 }
 
+export const commandRef = { current: LocomotionCommand.Idle }
+
 export const Character = (props: JSX.IntrinsicElements['group']) => {  
   const lastCycleTime = useRef(0)
   const [sparksInstances, setSparksInstances] = useState<SparksData[]>([])
-  const [ isLocomotionActive, setIsLocomotionActive ] = useState(false)
-  const { chestRef, characterPosition, characterOrientation, } = useAnimationStore()
+  const { chestRef, characterPosition, characterOrientation } = useAnimationStore()
 
   const rightController = useXRInputSourceState('controller', 'right')
   const { currentModel } = useModels()
@@ -149,6 +142,10 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
     }
   }, [actions, gameMode])
 
+  useEffect(() => {
+    if (gameMode == GameMode.None) return
+  }, [actions, gameMode])
+
   const lastRootPosition = useRef(nodes.root.position.clone())
   const lastRootOrientation = useRef(characterOrientation)
   const locomotionUpdate = () => {
@@ -158,18 +155,17 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
     const rightStick = rightController?.gamepad['xr-standard-thumbstick']
     const y = rightStick?.yAxis || 0
     const x = rightStick?.xAxis || 0
-    let command
 
     if (y < -DEADZONE) {
-      command = LocomotionCommand.Forward
+      commandRef.current = LocomotionCommand.Forward
     } else if (y > DEADZONE) {
-      command = LocomotionCommand.Backward
+      commandRef.current = LocomotionCommand.Backward
     } else if (x > DEADZONE) {
-      command = LocomotionCommand.TurnRight
+      commandRef.current = LocomotionCommand.TurnRight
     } else if (x < -DEADZONE) {
-      command = LocomotionCommand.TurnLeft
+      commandRef.current = LocomotionCommand.TurnLeft
     } else {
-      command = LocomotionCommand.Idle
+      commandRef.current = LocomotionCommand.Idle
     }
 
     if (lastCycleTime.current > currentAction.time) {
@@ -178,27 +174,28 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
         characterRef.current.rotateOnAxis(VECTOR_UP, lastRootOrientation.current)
       } 
     }
-    if (command == LocomotionCommand.Forward && !actions.Forward?.isRunning()) {
+    
+    if (commandRef.current == LocomotionCommand.Forward && !actions.Forward?.isRunning()) {
       currentAction?.fadeOut(LOCOMOTION_TRANSITION)
       actions.Forward?.reset().fadeIn(LOCOMOTION_TRANSITION).play()
       setCurrentAction(actions.Forward)
     } 
-    else if (command == LocomotionCommand.Backward && !actions.Backward?.isRunning()) {
+    else if (commandRef.current == LocomotionCommand.Backward && !actions.Backward?.isRunning()) {
       currentAction?.fadeOut(LOCOMOTION_TRANSITION)
       actions.Backward?.reset().fadeIn(LOCOMOTION_TRANSITION).play()
       setCurrentAction(actions.Backward)
     } 
-    else if (command == LocomotionCommand.TurnRight && !actions.TurnRight?.isRunning()) {
+    else if (commandRef.current == LocomotionCommand.TurnRight && !actions.TurnRight?.isRunning()) {
       currentAction?.fadeOut(LOCOMOTION_TRANSITION)
       actions.TurnRight?.reset().fadeIn(LOCOMOTION_TRANSITION).play()
       setCurrentAction(actions.TurnRight)
     } 
-    else if (command == LocomotionCommand.TurnLeft && !actions.TurnLeft?.isRunning()) {
+    else if (commandRef.current == LocomotionCommand.TurnLeft && !actions.TurnLeft?.isRunning()) {
       currentAction?.fadeOut(LOCOMOTION_TRANSITION)
       actions.TurnLeft?.reset().fadeIn(LOCOMOTION_TRANSITION).play()
       setCurrentAction(actions.TurnLeft)
     }
-    else if (command == LocomotionCommand.Idle && !actions.Idle?.isRunning() && lastCycleTime.current > currentAction.time) {
+    else if (commandRef.current == LocomotionCommand.Idle && !actions.Idle?.isRunning() && lastCycleTime.current > currentAction.time) {
       currentAction?.fadeOut(LOCOMOTION_TRANSITION)
       actions.Idle?.reset().fadeIn(LOCOMOTION_TRANSITION).play()
       setCurrentAction(actions.Idle)
@@ -291,7 +288,7 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
     <>
       <group {...props} ref={characterRef} position={characterPosition} rotation={[0, characterOrientation, 0]}>
         <primitive object={scene} scale={scale} userData={{ isCharacter: true }} />
-        <CuboidCollider args={[200, 100, 200]} position={[0, -50, 0]}/>
+        <CuboidCollider args={[200, 1, 200]} position={[0, -0.5, 0]}/>
       </group>
       <RigidBody
         ref={bodyRigidBodyRef}

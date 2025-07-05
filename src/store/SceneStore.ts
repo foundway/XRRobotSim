@@ -9,6 +9,14 @@ export enum GameMode {
   TwentyMeterMounted = '20-meter-mounted'
 }
 
+export enum LocomotionCommand {
+  Idle = 'Idle',
+  Forward = 'Forward', 
+  Backward = 'Backward',
+  TurnRight = 'Turn Right',
+  TurnLeft = 'Turn Left'
+}
+
 const Environments = {
   "Minedump": 'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/minedump_flats_2k.hdr',
   "Hanger": 'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/small_hangar_01_2k.hdr',

@@ -173,7 +173,7 @@ export const Enemy = forwardRef<EnemyRef, EnemyProps>(({ id, onRegister }, ref) 
               <Root pixelSize={0.01} depthTest={false} depthWrite={false} >
                 <Container width={80} height={80} backgroundOpacity={0} >
                 <Container width={currentHp/100 * 40} height={4} backgroundColor={"red"} positionType={"absolute"} positionTop={0} positionLeft={20}/>
-                <Container width={40} height={1} backgroundColor={"red"} positionType={"absolute"} positionTop={4} positionLeft={20}/>
+                <Container width={40} height={1} backgroundColor={"red"} positionType={"absolute"} positionTop={3} positionLeft={20}/>
                 {debug && <Text fontSize={10} color="white">
                   HP: {currentHp}
                 </Text>}
