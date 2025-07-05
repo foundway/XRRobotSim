@@ -14,6 +14,7 @@ const DESTROYED_DURATION = 1
 const FORCE_DAMAGE_MULTIPLIER = 0.5
 const ROTATE_SPEED = 0.2 
 const MOVE_SPEED = 0.5 
+const TARGET_OFFSET_FROM_CHEST = new Vector3(0, 0, 0.5)
 
 export enum EnemyState {
   ALIVE,
@@ -123,7 +124,7 @@ export const Enemy = forwardRef<EnemyRef, EnemyProps>(({ id, onRegister }, ref) 
     if (!chestRef.current || !rbdRef.current) return;
 
     const currentPosition = new Vector3().copy(rbdRef.current.translation())
-    const characterDir = chestRef.current.getWorldPosition(new Vector3()).sub(currentPosition).normalize()
+    const characterDir = chestRef.current.localToWorld(TARGET_OFFSET_FROM_CHEST).sub(currentPosition).normalize()
     const newLinvel = characterDir.clone().multiplyScalar(MOVE_SPEED * globalScale)
     
     const currentQuat = new Quaternion().copy(rbdRef.current.rotation())

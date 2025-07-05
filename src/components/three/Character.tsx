@@ -281,10 +281,10 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
   }
 
   useFrame(() => { 
-    xrOriginUpdate()
     locomotionUpdate()
     ikUpdate()
     RBDUpdate()
+    xrOriginUpdate()
   })
 
   return (
