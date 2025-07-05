@@ -13,7 +13,7 @@ const BrightnessSlider = () => {
       <Container alignItems="center" gap={12} paddingRight={12}>
         <Text width={40} textAlign="left">{backgroundIntensity.toFixed(2)}</Text>
         <Slider
-          min={0.01} max={2} step={0.001} width={120} value={backgroundIntensity}
+          min={0} max={2} step={0.01} width={120} value={backgroundIntensity}
           onValueChange={(value) => {
             setBackgroundIntensity(value)
           }}
