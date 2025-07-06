@@ -46,6 +46,7 @@ interface SceneState {
   
   globalScale: number
   globalScaleSqrt: number
+  globalScaleCubicRoot: number
   globalScaleFourth: number
   setGlobalScale: (scale: number) => void
 
@@ -95,11 +96,13 @@ export const useSceneStore = create<SceneState>((set) => ({
   
   globalScale: 1,
   globalScaleSqrt: 1,
+  globalScaleCubicRoot: 1,
   globalScaleFourth: 1,
   setGlobalScale: (scale) => set({ 
     globalScale: scale, 
     globalScaleSqrt: Math.sqrt(scale), 
-    globalScaleFourth: Math.pow(scale, 4) 
+    globalScaleCubicRoot: Math.pow(scale, 1/3),
+    globalScaleFourth: Math.pow(scale, 4),
   }),
 
   paused: false,

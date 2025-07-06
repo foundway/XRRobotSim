@@ -22,9 +22,7 @@ export const EnemySpawner = () => {
   }
 
   useEffect(() => {
-    const ids = Array.from({ 
-      length: enemyCountMax }, 
-      () => `enemy-${Date.now()}-${Math.floor(Math.random() * 1000)}`)
+    const ids = Array.from({ length: enemyCountMax }, (_, i) => `enemy-${i}`)
     setEnemyIds(ids)
   }, [enemyCountMax])
 

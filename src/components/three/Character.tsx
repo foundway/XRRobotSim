@@ -34,7 +34,7 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
   const { scene, nodes, animations } = useGLTF(currentModel.url)
   const parentRef = useRef<Object3D>(null)
   const characterRef = useRef<Object3D>(null)
-  const { globalScale, globalScaleSqrt, playerScaleRef, rightControllerRef, leftControllerRef, gameMode, debug } = useSceneStore()
+  const { globalScale, globalScaleCubicRoot, playerScaleRef, rightControllerRef, leftControllerRef, gameMode, debug } = useSceneStore()
 
   const ikBoneNames = useMemo(() => [
     'shoulderR', 'upper_armR', 'forearmR', 'handR',
@@ -134,7 +134,7 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
   useEffect(() => { // Set up actions
     Object.values(actions).forEach(action => {
       if (action) {
-        action.timeScale = 1/globalScaleSqrt
+        action.timeScale = 1/globalScaleCubicRoot
       }
     })
 
