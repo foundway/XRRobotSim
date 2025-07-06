@@ -67,6 +67,7 @@ interface SceneState {
 
   cockpitRef: RefObject<THREE.Object3D | null>
   playerScaleRef: RefObject<THREE.Object3D | null>
+  globalScaleRef: RefObject<THREE.Object3D | null>
   xrOriginRef: RefObject<THREE.Group | null>
   rightControllerRef: RefObject<THREE.Object3D | null>
   leftControllerRef: RefObject<THREE.Object3D | null>
@@ -121,8 +122,9 @@ export const useSceneStore = create<SceneState>((set) => ({
   setBackgroundIntensity: (intensity) => set({ backgroundIntensity: intensity }),
 
   cockpitRef: { current: null },
-  playerScaleRef: { current: null },
   xrOriginRef: { current: null },
+  playerScaleRef: { current: null },
+  globalScaleRef: { current: null },
   rightControllerRef: { current: null },
   leftControllerRef: { current: null },
 

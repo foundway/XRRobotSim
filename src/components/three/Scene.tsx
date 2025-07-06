@@ -10,12 +10,12 @@ import { DebrisParticles, SparksParticles } from './Particles'
 export const MAX_PHYSICS_SPEED = 10
 
 const Scene = ({globalScale}: {globalScale: number}) => {
-  const { debug, playerScaleRef, xrOriginRef, gameMode } = useSceneStore()
+  const { debug, playerScaleRef, xrOriginRef, gameMode, globalScaleRef } = useSceneStore()
 
   return (
     <>
       <color attach="background" args={['#333333']} />
-      <group name="global-scale" scale={globalScale}>
+      <group ref={globalScaleRef} scale={globalScale} position={[0, 0, 0]}>
         <Character />
         {gameMode !== GameMode.None && <EnemySpawner key={gameMode} />}
         {gameMode === GameMode.None && <OrbitControls 
