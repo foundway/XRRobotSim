@@ -34,7 +34,7 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
   const { scene, nodes, animations } = useGLTF(currentModel.url)
   const parentRef = useRef<Object3D>(null)
   const characterRef = useRef<Object3D>(null)
-  const { globalScale, playerScaleRef, rightControllerRef, leftControllerRef, gameMode, debug } = useSceneStore()
+  const { globalScale, globalScaleSqrt, playerScaleRef, rightControllerRef, leftControllerRef, gameMode, debug } = useSceneStore()
 
   const ikBoneNames = useMemo(() => [
     'shoulderR', 'upper_armR', 'forearmR', 'handR',
@@ -60,6 +60,8 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
   const rightHandRigidBodyRef = useRef<any>(null)
   const leftHandRigidBodyRef = useRef<any>(null)
   const bodyRigidBodyRef = useRef<any>(null)
+  const lastRootPosition = useRef(nodes.root.position.clone())
+  const lastRootOrientation = useRef(characterOrientation)
   const { scale } = useModelStore()
   const { cockpitRef, xrOriginRef } = useSceneStore()
 
@@ -129,7 +131,13 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
     }
   }, [nodes, scene, debug])
 
-  useEffect(() => {
+  useEffect(() => { // Set up actions
+    Object.values(actions).forEach(action => {
+      if (action) {
+        action.timeScale = 1/globalScaleSqrt
+      }
+    })
+
     if (gameMode == GameMode.None) {
       actions.Scan?.play()
       setCurrentAction(actions.Scan)
@@ -146,12 +154,13 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
     if (gameMode == GameMode.None) return
   }, [actions, gameMode])
 
-  const lastRootPosition = useRef(nodes.root.position.clone())
-  const lastRootOrientation = useRef(characterOrientation)
+  const isLocomotionActionRunning = () => {
+    return actions.Forward?.isRunning() || actions.Backward?.isRunning() || actions.TurnRight?.isRunning() || actions.TurnLeft?.isRunning()
+  }
+
   const locomotionUpdate = () => {
-    if (!currentAction || gameMode == GameMode.None) {
-      return
-    }
+    if (!currentAction || gameMode == GameMode.None) return 
+
     const rightStick = rightController?.gamepad['xr-standard-thumbstick']
     const y = rightStick?.yAxis || 0
     const x = rightStick?.xAxis || 0
@@ -168,29 +177,27 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
       commandRef.current = LocomotionCommand.Idle
     }
 
-    if (lastCycleTime.current > currentAction.time) {
-      if (characterRef.current) {
-        characterRef.current.position.add(lastRootPosition.current.applyQuaternion(characterRef.current.quaternion))
-        characterRef.current.rotateOnAxis(VECTOR_UP, lastRootOrientation.current)
-      } 
+    if (lastCycleTime.current > currentAction.time && characterRef.current) {
+      characterRef.current.position.add(lastRootPosition.current.applyQuaternion(characterRef.current.quaternion))
+      characterRef.current.rotateOnAxis(VECTOR_UP, lastRootOrientation.current)
     }
     
-    if (commandRef.current == LocomotionCommand.Forward && !actions.Forward?.isRunning()) {
+    if (commandRef.current == LocomotionCommand.Forward && !isLocomotionActionRunning()) {
       currentAction?.fadeOut(LOCOMOTION_TRANSITION)
       actions.Forward?.reset().fadeIn(LOCOMOTION_TRANSITION).play()
       setCurrentAction(actions.Forward)
     } 
-    else if (commandRef.current == LocomotionCommand.Backward && !actions.Backward?.isRunning()) {
+    else if (commandRef.current == LocomotionCommand.Backward && !isLocomotionActionRunning()) {
       currentAction?.fadeOut(LOCOMOTION_TRANSITION)
       actions.Backward?.reset().fadeIn(LOCOMOTION_TRANSITION).play()
       setCurrentAction(actions.Backward)
     } 
-    else if (commandRef.current == LocomotionCommand.TurnRight && !actions.TurnRight?.isRunning()) {
+    else if (commandRef.current == LocomotionCommand.TurnRight && !isLocomotionActionRunning()) {
       currentAction?.fadeOut(LOCOMOTION_TRANSITION)
       actions.TurnRight?.reset().fadeIn(LOCOMOTION_TRANSITION).play()
       setCurrentAction(actions.TurnRight)
     } 
-    else if (commandRef.current == LocomotionCommand.TurnLeft && !actions.TurnLeft?.isRunning()) {
+    else if (commandRef.current == LocomotionCommand.TurnLeft && !isLocomotionActionRunning()) {
       currentAction?.fadeOut(LOCOMOTION_TRANSITION)
       actions.TurnLeft?.reset().fadeIn(LOCOMOTION_TRANSITION).play()
       setCurrentAction(actions.TurnLeft)
