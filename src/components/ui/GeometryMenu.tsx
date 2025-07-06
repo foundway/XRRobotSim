@@ -15,7 +15,7 @@ const InputSlider = () => {
       <Container alignItems="center" gap={12} paddingRight={12}>
         <Text width={40} textAlign="left">{enemyCountMax.toFixed(0)}</Text>
         <Slider
-          min={0} max={20} step={1} width={120} value={enemyCountMax}
+          min={0} max={50} step={1} width={120} value={enemyCountMax}
           onValueChange={(value) => {
             setEnemyCountMax(value)
           }}
