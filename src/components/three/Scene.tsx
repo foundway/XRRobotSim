@@ -47,7 +47,7 @@ const Scene = ({globalScale}: {globalScale: number}) => {
         <Environment />
         <SparksParticles />
         <DebrisParticles />
-        {gameMode === GameMode.None && <ContactShadows opacity={1} scale={20} blur={1} />}
+        {/* {gameMode === GameMode.None && <ContactShadows opacity={1} scale={20} blur={1} />} */}
         {gameMode !== GameMode.None && (
           <XROrigin ref={xrOriginRef} position={[0, 0, 0]} >
             <Cockpit />

@@ -12,7 +12,7 @@ const EnvironmentContent = () => {
       environmentIntensity={backgroundIntensity}
       {...(showBackground ? {
         background: true,
-        ground: { height: 30, radius: 1000, scale: 100 },
+        ground: { height: 30, radius: 1000, scale: 100, },
       } : { background: false })}
     />
   )

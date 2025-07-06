@@ -10,6 +10,8 @@ import { useFrame } from '@react-three/fiber'
 import { useXRInputSourceState } from '@react-three/xr'
 import { RigidBody, BallCollider, CuboidCollider } from '@react-three/rapier'
 import { SparksEmitter } from './SparksEmitter'
+import * as THREE from 'three'
+import PlanarShadow from './PlanarShadow'
 
 const DEADZONE = 0.3
 const LOCOMOTION_TRANSITION = 0
@@ -284,7 +286,7 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
     setSparksInstances(prev => [...prev, newSparks])
   }
 
-  useFrame(() => { 
+  useFrame(() => {
     locomotionUpdate()
     ikUpdate()
     RBDUpdate()
@@ -297,6 +299,7 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
         <primitive object={scene} scale={scale} userData={{ isCharacter: true }} />
         <CuboidCollider args={[200, 1, 200]} position={[0, -0.5, 0]}/>
       </group>
+
       <RigidBody
         ref={bodyRigidBodyRef}
         name="body"
@@ -358,6 +361,8 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
         /> */}
         {debug && <axesHelper/>}
       </group>
+      <PlanarShadow targetRef={{ current: nodes.footL }} size={1.8} intensity={0.6} attenuation={3} />
+      <PlanarShadow targetRef={{ current: nodes.footR }} size={1.8} intensity={0.6} attenuation={3} />
     </>
   )
 }
