@@ -10,7 +10,6 @@ import { useFrame } from '@react-three/fiber'
 import { useXRInputSourceState } from '@react-three/xr'
 import { RigidBody, BallCollider, CuboidCollider } from '@react-three/rapier'
 import { SparksEmitter } from './SparksEmitter'
-import * as THREE from 'three'
 import PlanarShadow from './PlanarShadow'
 
 const DEADZONE = 0.3
@@ -361,8 +360,8 @@ export const Character = (props: JSX.IntrinsicElements['group']) => {
         /> */}
         {debug && <axesHelper/>}
       </group>
-      <PlanarShadow targetRef={{ current: nodes.footL }} size={1.8} intensity={0.6} attenuation={3} />
-      <PlanarShadow targetRef={{ current: nodes.footR }} size={1.8} intensity={0.6} attenuation={3} />
+      <PlanarShadow targetRef={{ current: nodes.footL }} size={1.8} intensity={2} attenuation={3} />
+      <PlanarShadow targetRef={{ current: nodes.footR }} size={1.8} intensity={2} attenuation={3} />
     </>
   )
 }

@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import * as THREE from 'three'
-import { useRef, RefObject } from 'react'
+import { RefObject } from 'react'
 
 export enum GameMode {
   None = 'none',

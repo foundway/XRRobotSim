@@ -3,7 +3,6 @@
 //
 
 import { createContext, useContext, useState, ReactNode } from 'react'
-import { Object3D } from 'three'
 
 interface ModelItem {
   name: string

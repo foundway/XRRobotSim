@@ -1,4 +1,4 @@
-import { OrbitControls, Grid, ContactShadows } from '@react-three/drei'
+import { OrbitControls, Grid } from '@react-three/drei'
 import { XROrigin } from '@react-three/xr'
 import { Character } from '@/components/three/Character'
 import { Environment } from '@/components/three/Environment'
@@ -47,7 +47,6 @@ const Scene = ({globalScale}: {globalScale: number}) => {
         <Environment />
         <SparksParticles />
         <DebrisParticles />
-        {/* {gameMode === GameMode.None && <ContactShadows opacity={1} scale={20} blur={1} />} */}
         {gameMode !== GameMode.None && (
           <XROrigin ref={xrOriginRef} position={[0, 0, 0]} >
             <Cockpit />
